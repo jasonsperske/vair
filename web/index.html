@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vair — library</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-content: center;
+        gap: 1rem;
+        padding: 3rem 1.5rem;
+        background: #05070f;
+        color: #cfd8ff;
+        font: 16px/1.6 ui-sans-serif, system-ui, sans-serif;
+      }
+      main { max-width: 46ch; }
+      h1 { font-size: 1.3rem; letter-spacing: 0.12em; text-transform: uppercase; }
+      ul { padding-left: 1.1rem; }
+      li { margin-bottom: 0.4rem; }
+      code { color: #7fd0ff; }
+      .note { opacity: 0.55; font-size: 0.9rem; border-left: 2px solid #2a3760; padding-left: 0.9rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Vair</h1>
+      <p>Companion app. <strong>View and share only</strong> — authoring happens in VR.</p>
+      <p>Scope for v1 (plan.md §10):</p>
+      <ul>
+        <li>Account and credential entry — all keys live on the server</li>
+        <li>Scene library with thumbnails</li>
+        <li>Share links and a static viewer</li>
+        <li>Capability toggles, delivered to the headset as a manifest</li>
+      </ul>
+      <p class="note">
+        Not a 2D scene editor. A web editor is a second product that would compete
+        with the pitch. Ships with M6 — see <code>plan.md §12</code>.
+      </p>
+    </main>
+  </body>
+</html>

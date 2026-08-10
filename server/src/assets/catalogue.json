@@ -1,0 +1,28 @@
+{
+  "entries": [
+    {
+      "id": "primitive:box",
+      "name": "box",
+      "tags": ["box", "cube", "block", "crate"],
+      "url": "primitive:box",
+      "boundsY": 0.4,
+      "license": "CC0"
+    },
+    {
+      "id": "primitive:sphere",
+      "name": "sphere",
+      "tags": ["sphere", "ball", "orb"],
+      "url": "primitive:sphere",
+      "boundsY": 0.5,
+      "license": "CC0"
+    },
+    {
+      "id": "primitive:cylinder",
+      "name": "cylinder",
+      "tags": ["cylinder", "tube", "pillar", "column"],
+      "url": "primitive:cylinder",
+      "boundsY": 0.5,
+      "license": "CC0"
+    }
+  ]
+}

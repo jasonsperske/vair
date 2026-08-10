@@ -1,0 +1,16 @@
+{
+  "name": "@vair/tools",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "latency": "tsx src/latency.ts"
+  },
+  "dependencies": {
+    "@vair/shared": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.6",
+    "tsx": "^4.19.2"
+  }
+}

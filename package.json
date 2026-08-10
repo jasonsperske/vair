@@ -1,0 +1,29 @@
+{
+  "name": "vair",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Vair — Virtual Artificial Intelligent Reality. Voice-driven VR scene builder for Quest 3.",
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "client",
+    "server",
+    "web",
+    "tools"
+  ],
+  "engines": {
+    "node": ">=18.18"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace @vair/client",
+    "dev:server": "npm run dev --workspace @vair/server",
+    "dev:web": "npm run dev --workspace @vair/web",
+    "build": "npm run build --workspace @vair/client && npm run build --workspace @vair/web",
+    "typecheck": "tsc -p shared/tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit && tsc -p server/tsconfig.json --noEmit && tsc -p tools/tsconfig.json --noEmit",
+    "headset": "adb reverse tcp:5173 tcp:5173 && adb reverse tcp:8787 tcp:8787",
+    "latency": "npm run latency --workspace @vair/tools"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

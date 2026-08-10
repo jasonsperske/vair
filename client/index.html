@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Vair</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #000;
+        color: #cfd8ff;
+        font: 15px/1.5 ui-sans-serif, system-ui, sans-serif;
+        overflow: hidden;
+      }
+      #overlay {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        gap: 0.75rem;
+        text-align: center;
+        padding: 2rem;
+      }
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin: 0;
+      }
+      p {
+        margin: 0;
+        opacity: 0.6;
+        max-width: 34ch;
+      }
+      #status {
+        font-variant-numeric: tabular-nums;
+        opacity: 0.45;
+        font-size: 0.85rem;
+      }
+      #enter-xr {
+        margin-top: 0.5rem;
+        padding: 0.8rem 1.6rem;
+        border: 1px solid #4a5bd0;
+        border-radius: 999px;
+        background: transparent;
+        color: #cfd8ff;
+        font: inherit;
+        cursor: pointer;
+      }
+      #enter-xr:disabled {
+        opacity: 0.35;
+        cursor: default;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="overlay">
+      <h1>Vair</h1>
+      <p>Virtual Artificial Intelligent Reality. Put the headset on and speak a world into existence.</p>
+      <button id="enter-xr" disabled>Checking for WebXR…</button>
+      <div id="status"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
