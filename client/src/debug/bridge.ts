@@ -34,6 +34,8 @@ export type BridgeDeps = {
   /** What the model last said aloud, for inspection while TTS is unbuilt. */
   lastSpeech(): string;
   presenting(): boolean;
+  /** Live voice-gate reading, for tuning the VAD in a real room. */
+  voice?(): { rms: number; gate: number; voice: boolean };
 };
 
 type SayOptions = { durationMs?: number; hand?: HandSide };
@@ -259,6 +261,38 @@ export function installDebugBridge(deps: BridgeDeps): void {
       } finally {
         for (const t of stream.getTracks()) t.stop();
       }
+    },
+
+    /**
+     * Watch the voice gate live, for tuning in a real room.
+     *
+     * An energy VAD is only ever as good as its threshold, and the threshold is
+     * a property of the room and the headset's mic — not something that can be
+     * chosen from a desk. Run this, speak normally, then stay quiet: `speaking`
+     * should be true only while you talk. If it is true when you are silent the
+     * silence backstop will never fire and every utterance runs to the 15s cap.
+     */
+    async watchVoice(seconds = 6) {
+      if (!deps.voice) return { error: "voice metering unavailable" };
+      const samples: { t: number; rms: number; gate: number; voice: boolean }[] = [];
+      const t0 = performance.now();
+      while (performance.now() - t0 < seconds * 1000) {
+        const v = deps.voice();
+        samples.push({ t: Math.round(performance.now() - t0), ...v });
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      const speaking = samples.filter((s) => s.voice).length;
+      return {
+        note: "voice should be true only while you are talking",
+        samples: samples.length,
+        framesFlaggedAsSpeech: speaking,
+        rmsMin: Math.min(...samples.map((s) => s.rms)).toFixed(4),
+        rmsMax: Math.max(...samples.map((s) => s.rms)).toFixed(4),
+        gate: samples.at(-1)?.gate.toFixed(4),
+        timeline: samples
+          .filter((_, i) => i % 3 === 0)
+          .map((s) => `${s.t}ms ${s.rms.toFixed(3)}${s.voice ? " *" : ""}`),
+      };
     },
 
     measure(token = "here", msAgo = 0) {

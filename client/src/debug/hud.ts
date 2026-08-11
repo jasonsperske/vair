@@ -7,6 +7,7 @@ import {
   Vector3,
   type Quaternion,
 } from "three";
+
 import type { InteractionState } from "../input/state-machine.js";
 
 /**
@@ -30,6 +31,10 @@ export type HudData = {
   toggle: boolean;
   fps: number;
   bufferSeconds: number;
+  /** Live voice level while listening. Shown so the VAD gate is tunable. */
+  micRms: number;
+  /** Level the room noise floor puts the speech gate at, right now. */
+  micGate: number;
   /**
    * plan.md §7 — show the transcript before the round trip. STT error is the
    * most frequent failure and the only one the user can diagnose instantly.
@@ -102,6 +107,21 @@ export class DebugHud {
     c.font = "20px ui-monospace, monospace";
     c.fillStyle = "#9fb0e0";
     c.fillText(`${d.fps.toFixed(0)} fps   buffer ${d.bufferSeconds.toFixed(1)}s`, 24, 82);
+
+    // Voice meter — only meaningful while listening, and the fastest way to see
+    // whether the VAD threshold is right for this room.
+    if (d.state === "LISTENING") {
+      const scale = (v: number) => Math.min(1, v / 0.1) * 240;
+      c.fillStyle = "#1b2440";
+      c.fillRect(376, 66, 240, 18);
+      // Blue once the level clears the gate that holds off the silence
+      // backstop; grey means the backstop is counting down.
+      c.fillStyle = d.micRms > d.micGate ? "#5aa8ff" : "#3f4870";
+      c.fillRect(376, 66, scale(d.micRms), 18);
+      // The gate itself, which floats with the room's noise floor.
+      c.fillStyle = "#ffb23f";
+      c.fillRect(376 + scale(d.micGate), 62, 2, 26);
+    }
 
     this.paintHand(c, 24, 120, "L", d.leftTracked, d.leftIsHand, d.leftPinches, d.leftPinchDistance);
     this.paintHand(c, 330, 120, "R", d.rightTracked, d.rightIsHand, d.rightPinches, d.rightPinchDistance);

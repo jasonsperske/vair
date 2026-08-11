@@ -15,7 +15,7 @@ into a scene document you can save, reload and share.
 | Milestone | State |
 |---|---|
 | M0 — Void | implemented, **awaiting on-device acceptance** (50 pinch trials, both hands) |
-| M1 — Voice loop | **partial** — state machine, cancel, backstops and offline Vosk STT work; gesture-gated audio capture is not built, pending the in-session mic probe |
+| M1 — Voice loop | implemented end to end, **awaiting on-device acceptance** with real speech |
 | M2 — Temporal binding | pose ring buffer + deixis resolver built early per §6; word timings pending M1 |
 | M3 — Scene + Claude | **partial** — prompt, schema boundary, apply path, object naming and streaming progressive commit work end to end; the glTF pipeline does not, and first object lands at ~3.0s against a 2s target |
 | M4–M6 | not started |

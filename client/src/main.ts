@@ -13,7 +13,9 @@ import { SceneView } from "./scene/view.js";
 import { WispField } from "./vfx/wisps.js";
 import { DebugHud, type HudData } from "./debug/hud.js";
 import { earcons } from "./audio/earcons.js";
-import { health, streamTurn } from "./net/api.js";
+import { AudioCapture } from "./audio/capture.js";
+import { health, streamTurn, transcribe } from "./net/api.js";
+import { LatencyTurn, newTurnId } from "./net/latency.js";
 import type { HandSide } from "./core/pose-buffer.js";
 
 /**
@@ -49,11 +51,23 @@ runtime.root.add(hud.mesh);
 runtime.root.add(new HemisphereLight(0x4a5f9e, 0x080a12, 0.6));
 
 /**
- * M1 has not been built: there is no microphone capture and no upload. Flip
- * this when it is. Until then the only way into the transcript path is an armed
- * mock utterance from the debug bridge.
+ * Real microphone capture. Verified working inside an immersive session on
+ * Quest 2 before this was wired — that was the M1 gate.
  */
-const CAPTURE_AVAILABLE = false;
+const capture = new AudioCapture();
+const CAPTURE_AVAILABLE = AudioCapture.supported();
+
+/** Stage timings for the turn in flight (§16). */
+let turnLatency: LatencyTurn | null = null;
+/**
+ * Flushed by the frame loop rather than inline, so `frame_presented` — stamped
+ * on the first frame after the scene changed — makes it into the sample.
+ */
+let flushLatencyAfterFrame = false;
+
+function endTurnTiming(): void {
+  flushLatencyAfterFrame = true;
+}
 
 /** A mock utterance waiting for the next commit. Set by the debug bridge. */
 type ArmedUtterance = { text: string; durationMs: number };
@@ -78,12 +92,16 @@ const machine = new InteractionMachine({
     transcriptLine = "";
     note = "";
 
-    const ctx = earcons.context;
-    if (ctx) clock.align(ctx);
+    turnLatency = new LatencyTurn(newTurnId());
+    turnLatency.mark("utterance_start", xrTime);
+
+    // A mock utterance bypasses the microphone entirely, so don't open it.
+    if (!armedUtterance && CAPTURE_AVAILABLE) void beginCapture(xrTime);
   },
 
   onListenStop(reason, xrTime) {
     hands.pulse(machine.side, 0.3, 20);
+    turnLatency?.mark("vad_end", xrTime);
 
     const armed = armedUtterance;
     armedUtterance = null;
@@ -96,18 +114,23 @@ const machine = new InteractionMachine({
       // Honest failure rather than a state machine stranded in TRANSCRIBING.
       // The bridge hint only makes sense where the bridge exists.
       note = import.meta.env.DEV
-        ? 'no capture yet (M1) — try window.vair.say("put a cube here")'
-        : "voice capture not built yet (M1)";
+        ? 'no microphone here — try window.vair.say("put a cube here")'
+        : "voice capture unavailable in this browser";
       machine.failed(xrTime);
       return;
     }
+
     note = `committed via ${reason}`;
+    void finishCapture(xrTime);
   },
 
   onCancel() {
     inFlight?.abort();
     inFlight = null;
     armedUtterance = null;
+    // §7 — a cancelled utterance must not reach the network.
+    capture.abort();
+    turnLatency = null;
     note = "cancelled";
   },
 
@@ -120,6 +143,88 @@ const machine = new InteractionMachine({
 let inFlight: AbortController | null = null;
 let toggle = false;
 const pressCount: Record<HandSide, number> = { left: 0, right: 0 };
+
+/**
+ * Open the microphone and start recording.
+ *
+ * Async, but the utterance anchor is taken from the moment the encoder actually
+ * starts, so a slow first device-open costs leading audio rather than
+ * misaligning every word time against the pose buffer.
+ */
+async function beginCapture(xrTime: number): Promise<void> {
+  try {
+    await capture.prepare();
+    if (machine.state !== "LISTENING") {
+      // Committed or cancelled while the device was opening.
+      capture.abort();
+      return;
+    }
+    capture.start(xrTime);
+  } catch (err) {
+    note = `mic unavailable: ${err instanceof Error ? err.message : String(err)}`;
+    machine.failed(lastXrTime);
+  }
+}
+
+/** Stop recording, upload, transcribe, resolve deixis, then hand to the model. */
+async function finishCapture(endXrTime: number): Promise<void> {
+  let result: Awaited<ReturnType<AudioCapture["stop"]>>;
+  try {
+    result = await capture.stop();
+  } catch (err) {
+    note = `capture failed: ${err instanceof Error ? err.message : String(err)}`;
+    machine.failed(endXrTime);
+    return;
+  }
+
+  if (!result) {
+    note = "no audio captured — the mic may not have opened in time";
+    machine.failed(endXrTime);
+    return;
+  }
+
+  const controller = new AbortController();
+  inFlight = controller;
+
+  try {
+    turnLatency?.mark("upload_start");
+    const transcript = await transcribe(result.audio, controller.signal);
+    if (controller.signal.aborted) return;
+    turnLatency?.mark("transcript_ready");
+
+    machine.transcriptReady();
+    // plan.md §7 — show the transcript before the round trip. STT error is the
+    // most frequent failure and the only one the user can diagnose instantly.
+    transcriptLine = transcript.text;
+
+    if (transcript.words.length === 0) {
+      note = "heard nothing — say it again";
+      machine.failed(lastXrTime);
+      endTurnTiming();
+      return;
+    }
+
+    const resolved = resolveUtterance(transcript, result.utteranceStartXrTime, resolveOptions());
+    turnLatency?.mark("intent_resolved");
+    lastResolved = resolved;
+    note = summariseUtterance(resolved);
+
+    if (claudeAvailable) {
+      void sendTurn(resolved);
+    } else {
+      note = `${note} · no model configured`;
+      machine.done();
+      endTurnTiming();
+    }
+  } catch (err) {
+    if (controller.signal.aborted) return;
+    note = err instanceof Error ? err.message : String(err);
+    machine.failed(lastXrTime);
+    turnLatency?.flush();
+  } finally {
+    if (inFlight === controller) inFlight = null;
+  }
+}
 
 /**
  * Turn an armed utterance into measurements through the real pipeline.
@@ -191,7 +296,11 @@ async function sendTurn(u: ResolvedUtterance): Promise<void> {
         // Committed the instant it arrives — this is the progressive part.
         // Re-folding the scene per action means a later action can reference an
         // object placed by an earlier one in the same turn.
-        if (applied === 0) machine.applying();
+        if (applied === 0) {
+          machine.applying();
+          // The moment the void first changes — the number §12 budgets at 2s.
+          turnLatency?.mark("scene_mutated");
+        }
         const { events, dropped } = applyActions([action], log.scene(), {
           t: Date.now(),
           utterance: u.text,
@@ -215,10 +324,12 @@ async function sendTurn(u: ResolvedUtterance): Promise<void> {
 
     if (response.question) machine.needsInput();
     else machine.done();
+    endTurnTiming();
   } catch (err) {
     if (controller.signal.aborted) return;
     note = err instanceof Error ? err.message : String(err);
     machine.failed(lastXrTime);
+    endTurnTiming();
   } finally {
     if (inFlight === controller) inFlight = null;
   }
@@ -258,6 +369,9 @@ const headQuaternion = new Quaternion();
 const focus = new Vector3();
 let fps = 0;
 let elapsed = 0;
+/** Live voice level while listening — shown on the HUD for threshold tuning. */
+let micRms = 0;
+let micGate = 0;
 
 runtime.onFrame(({ xrTime, dt, frame, referenceSpace }) => {
   elapsed += dt;
@@ -292,7 +406,29 @@ runtime.onFrame(({ xrTime, dt, frame, referenceSpace }) => {
 
   if (hands.left.justPressed) machine.press("left", xrTime);
   if (hands.right.justPressed) machine.press("right", xrTime);
+
+  // Voice activity feeds the 1.5s silence backstop (§7). Sampled only while
+  // listening: the analyser is meaningless otherwise and the mic may be shut.
+  if (machine.state === "LISTENING" && capture.recording) {
+    const level = capture.sample();
+    micRms = level.rms;
+    micGate = level.gate;
+    if (level.voice) machine.noteVoice(xrTime);
+  } else if (machine.state !== "LISTENING") {
+    micRms = 0;
+  }
+
   machine.tick(xrTime);
+
+  if (turnLatency) {
+    // Runs before the flush so the presentation stamp lands in the sample.
+    turnLatency.notePresented(xrTime);
+    if (flushLatencyAfterFrame) {
+      turnLatency.flush();
+      turnLatency = null;
+      flushLatencyAfterFrame = false;
+    }
+  }
 
   // The swarm converges on the active hand while listening and stays with the
   // user otherwise. Never on the HUD — that would train the user to look at it.
@@ -321,6 +457,8 @@ function hudData(): HudData {
     toggle,
     fps,
     bufferSeconds: span / 1000,
+    micRms,
+    micGate,
     transcript: transcriptLine,
     note,
   };
@@ -362,6 +500,9 @@ async function boot(): Promise<void> {
 
   runtime.onSessionChange((present) => {
     overlay.style.display = present ? "none" : "";
+    // Release the device on exit so the headset's recording indicator goes out
+    // with the session rather than lingering on the flat page.
+    if (!present) capture.release();
   });
 
   log.append({
@@ -393,6 +534,12 @@ async function boot(): Promise<void> {
         lastUtterance: () => lastResolved,
         lastSpeech: () => lastSpeech,
         presenting: () => runtime.isPresenting(),
+        // Opens the mic if it isn't already, so the gate can be tuned without
+        // having to hold a pinch through the whole measurement.
+        voice: () => {
+          if (!capture.ready) void capture.prepare();
+          return capture.sample();
+        },
       });
     });
   }

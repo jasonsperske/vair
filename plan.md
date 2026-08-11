@@ -310,8 +310,21 @@ round trip.
 **M1 — Voice loop.** Gesture-gated audio capture, upload, cloud STT, floating transcript,
 full state machine driving wisp behaviour, cancel, silence backstop.
 *Accept:* speak a sentence, see an accurate transcript within 1.5s, cancel mid-flight.
-*Status:* state machine, cancel, silence backstop, floating transcript and the **STT provider**
-are done; **gesture-gated audio capture is not**, so the loop is not closed.
+*Status:* implemented end to end — **awaiting on-device acceptance**. Gesture-gated capture,
+upload, transcription, floating transcript, cancel, silence backstop and the §16 stage
+instrumentation all run. Measured: backstop fires at 1501ms, Vosk returns in 451ms
+including upload and transcode. Not yet verified with real speech on the headset, which is
+what the acceptance criterion actually asks for.
+
+The in-session microphone gate is **answered: it works.** On Quest 2, in an active
+immersive session, getUserMedia, MediaRecorder and AudioContext all function
+(18650 bytes, peak 0.31). No pre-session acquisition needed.
+
+**Automatic gain control had to be turned off.** With AGC on, a silent room measured
+0.003–0.152 RMS — overlapping speech — because AGC rides the gain up during quiet
+passages. No threshold could separate voice from silence, so the backstop never fired and
+every utterance ran to the 15s cap. With AGC off the same room reads 0.000–0.008. This is
+the kind of thing §12's "test on-device every milestone" exists to catch.
 
 STT is **Vosk, local and offline** rather than cloud. Word-level timestamps (§6.3) are the
 filter that matters, not price: the Web Speech API has none *and* the Quest browser lacks it.

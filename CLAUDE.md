@@ -44,6 +44,15 @@ the same job at the `/api/stt` boundary.
 Neither is a fallback. If a real provider turns out not to emit word-level timestamps, the answer
 is a different provider, not the mock (§6.3).
 
+**Never turn `autoGainControl` back on in the capture constraints.** AGC rides the gain up
+during quiet passages, so a silent room measures at speech levels (0.003–0.152 RMS observed) and
+no voice-activity threshold can work. The §7 silence backstop stops firing entirely and every
+utterance runs to the 15s cap. With AGC off the same room reads 0.000–0.008. If quiet speech ever
+transcribes badly, open a second analysis-only stream rather than re-enabling it.
+
+Tune the voice gate in the actual room with `await window.vair.watchVoice()` — speak, then stay
+silent, and `voice` should only be true while talking.
+
 Real STT is `STT_PROVIDER=vosk` — offline, no key, native word timings, `npm run stt:model` to
 fetch the model. Don't reach for the Web Speech API: it returns no word timings and the Quest
 browser doesn't implement it. `health.stt` deliberately reports false until the model is on disk.
