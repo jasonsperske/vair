@@ -445,9 +445,19 @@ objects with no id collision.
   > to `set_ground`. This is also the first population of the `local` row in the latency
   > table, which finally makes the local-vs-server comparison in tools/ meaningful.
   >
-  > **Sky and lighting: still unbuilt**, and `move` / `scale` / `rotate` still route through
-  > the model at ~3s, which is exactly the 2s-to-pick-up failure this rule forbids. That is
-  > what M4's affordance fast path is for; the ground proves the pattern works.
+  > **Lighting: met.** Point lights and suns are placeable and adjustable, and overall
+  > brightness takes the same local fast path as the ground — "brighter" / "a bit darker"
+  > never leave the device. Anything naming one light escalates, because *which* light is
+  > exactly the question the model should answer.
+  >
+  > Lights are ordinary scene objects (`assetId: "light:point"`), so moving, renaming,
+  > removing, undo, save and reload came for free and **no new event type was needed** —
+  > `object_placed` already carried `parameters` and `parameter_set` already existed. Worth
+  > noting as evidence the §8 event model is carrying its weight.
+  >
+  > **Sky: still unbuilt**, and `move` / `scale` / `rotate` still route through the model at
+  > ~3s, which is exactly the 2s-to-pick-up failure this rule forbids. That is what M4's
+  > affordance fast path is for; ground and brightness prove the pattern works.
 - Under 5s from utterance to first visible change feels like magic; over 15s feels broken.
 - Browser heap will hit limits before native would. Implement asset eviction from M3, not
   later.

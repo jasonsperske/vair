@@ -1,5 +1,5 @@
-import { Euler, HemisphereLight, Quaternion, Vector3 } from "three";
-import { applyActions, synthesizeTranscript } from "@vair/shared";
+import { Euler, Quaternion, Vector3 } from "three";
+import { applyActions, synthesizeTranscript, LIGHT_INTENSITY } from "@vair/shared";
 import { clock } from "./core/clock.js";
 import { poseBuffer } from "./core/pose-buffer.js";
 import { createRuntime, isSupported } from "./core/xr.js";
@@ -12,8 +12,8 @@ import { ObjectRegistry } from "./scene/registry.js";
 import { SceneView } from "./scene/view.js";
 import { WispField } from "./vfx/wisps.js";
 import { HandModels } from "./vfx/hand-models.js";
-import { Ground } from "./vfx/ground.js";
-import { matchGroundCommand } from "./input/ground-command.js";
+import { SceneEnvironment } from "./vfx/environment.js";
+import { matchBrightnessCommand, matchGroundCommand } from "./input/ground-command.js";
 import { DebugHud, type HudData } from "./debug/hud.js";
 import { earcons } from "./audio/earcons.js";
 import { AudioCapture } from "./audio/capture.js";
@@ -55,15 +55,12 @@ const wisps = new WispField();
 const hud = new DebugHud();
 const log = new EventLogStore();
 const registry = new ObjectRegistry(runtime.root);
-const ground = new Ground(runtime.root);
+const environment = new SceneEnvironment(runtime.root);
 // Projects the event log onto the scene graph. Nothing else adds meshes.
-new SceneView(registry, log, ground);
+new SceneView(registry, log, environment);
 
 runtime.root.add(wisps.points);
 runtime.root.add(hud.mesh);
-// Just enough light that placed primitives are not silhouettes. The void stays
-// a void — no environment map, no sky (plan.md §2).
-runtime.root.add(new HemisphereLight(0x4a5f9e, 0x080a12, 0.6));
 
 /**
  * Real microphone capture. Verified working inside an immersive session on
@@ -169,6 +166,7 @@ const pressCount: Record<HandSide, number> = { left: 0, right: 0 };
  */
 function dispatchUtterance(u: ResolvedUtterance): void {
   if (tryLocalGround(u)) return;
+  if (tryLocalBrightness(u)) return;
 
   if (claudeAvailable) {
     void sendTurn(u);
@@ -203,6 +201,41 @@ function tryLocalGround(u: ResolvedUtterance): boolean {
   turnLatency?.setPath("local");
   turnLatency?.mark("scene_mutated");
   note = style === "void" ? "floor removed" : `floor → ${style}`;
+  machine.done();
+  endTurnTiming();
+  return true;
+}
+
+/**
+ * Overall brightness, local and instant (§13). Relative steps only; anything
+ * naming a particular light escalates so the model can resolve which one.
+ */
+function tryLocalBrightness(u: ResolvedUtterance): boolean {
+  const step = matchBrightnessCommand(u.text);
+  if (step === null) return false;
+
+  const current = log.scene().environment.ambientIntensity;
+  const next = Math.min(LIGHT_INTENSITY.max, Math.max(LIGHT_INTENSITY.min, current + step));
+  if (next === current) {
+    // Already at the end of the range — say so rather than silently doing
+    // nothing, which would read as the command being missed.
+    note = step > 0 ? "already at full brightness" : "already as dark as it goes";
+    machine.done();
+    endTurnTiming();
+    return true;
+  }
+
+  log.append({
+    type: "environment_set",
+    t: Date.now(),
+    source: "local",
+    utterance: u.text,
+    environment: { ambientIntensity: next },
+  });
+
+  turnLatency?.setPath("local");
+  turnLatency?.mark("scene_mutated");
+  note = `brightness → ${next.toFixed(1)}`;
   machine.done();
   endTurnTiming();
   return true;

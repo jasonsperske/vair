@@ -1,7 +1,8 @@
 import type { SceneEvent, SceneObject } from "@vair/shared";
-import { foldScene } from "@vair/shared";
+import { foldScene, isLightAsset } from "@vair/shared";
 import { primitiveFor, type ObjectRegistry } from "./registry.js";
-import type { Ground } from "../vfx/ground.js";
+import { applyLightParameter, createLight, type LightParameters } from "./lights.js";
+import type { SceneEnvironment } from "../vfx/environment.js";
 import type { EventLogStore } from "./event-log.js";
 
 /**
@@ -16,7 +17,7 @@ export class SceneView {
   constructor(
     private readonly registry: ObjectRegistry,
     private readonly log: EventLogStore,
-    private readonly ground: Ground,
+    private readonly environment: SceneEnvironment,
   ) {
     log.onAppend((e) => this.apply(e));
     // A load replaces the whole log, so incremental application has nothing to
@@ -25,11 +26,10 @@ export class SceneView {
     this.syncEnvironment();
   }
 
-  /** Ground follows the scene document, so a loaded scene restores its floor. */
+  /** Driven by the folded document, so a loaded scene restores its floor and
+   * brightness rather than only the events that happened to arrive live. */
   private syncEnvironment(): void {
-    const env = this.log.scene().environment;
-    this.ground.setStyle(env.groundMaterial);
-    this.ground.setVisible(env.groundVisible);
+    this.environment.apply(this.log.scene().environment);
   }
 
   private apply(e: SceneEvent): void {
@@ -47,9 +47,7 @@ export class SceneView {
           utterance: e.utterance,
           createdAt: e.t,
         };
-        // Primitives only so far. M3 proper swaps this for a GLTFLoader keyed
-        // on assetId, with the primitive kept as the §14 fallback.
-        this.registry.add(object, primitiveFor(e.assetId));
+        this.registry.add(object, nodeFor(object));
         break;
       }
 
@@ -81,20 +79,22 @@ export class SceneView {
         this.rebuild();
         break;
 
-      case "environment_set": {
-        // Driven from the folded document rather than the event, so a partial
-        // event still resolves against the scene's current environment.
-        const env = this.log.scene().environment;
-        this.ground.setStyle(env.groundMaterial);
-        this.ground.setVisible(env.groundVisible);
+      // Applied from the folded document rather than the event, so a partial
+      // event still resolves against the scene's current environment.
+      case "environment_set":
+        this.syncEnvironment();
+        break;
+
+      case "parameter_set": {
+        const node = this.registry.get(e.objectId);
+        if (node) applyLightParameter(node, e.parameter, e.value);
         break;
       }
 
-      // Neither changes the scene graph: a save names the scene, the others
-      // touch document-level state the fold already owns.
+      // Neither changes the scene graph: a save names the scene, the other
+      // touches document-level state the fold already owns.
       case "scene_saved":
       case "scene_created":
-      case "parameter_set":
         break;
     }
   }
@@ -102,8 +102,24 @@ export class SceneView {
   private rebuild(): void {
     this.registry.clear();
     for (const object of foldScene(this.log.all(), Date.now()).objects) {
-      this.registry.add(object, primitiveFor(object.assetId));
+      this.registry.add(object, nodeFor(object));
     }
     this.syncEnvironment();
   }
+}
+
+/**
+ * A placed object becomes either a light or a mesh, decided by its asset id.
+ *
+ * Primitives only for props so far. M3 proper swaps that for a GLTFLoader keyed
+ * on assetId, with the primitive kept as the §14 fallback.
+ */
+function nodeFor(object: SceneObject) {
+  if (isLightAsset(object.assetId)) {
+    return createLight(object.assetId, {
+      color: (object.parameters.color as LightParameters["color"]) ?? "neutral",
+      intensity: typeof object.parameters.intensity === "number" ? object.parameters.intensity : 5,
+    });
+  }
+  return primitiveFor(object.assetId);
 }

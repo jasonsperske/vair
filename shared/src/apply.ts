@@ -2,6 +2,7 @@ import type { ModelAction, Vec3Object } from "./actions.js";
 import type { SceneEvent } from "./events.js";
 import type { Quat, Vec3 } from "./math.js";
 import type { SceneDocument } from "./scene.js";
+import { LIGHT_INTENSITY, lightAssetId } from "./lights.js";
 
 /**
  * Turning model intent into event drafts (plan.md §8).
@@ -162,6 +163,71 @@ export function applyActions(
       case "exit_session":
         break;
 
+      case "place_light": {
+        // An ordinary object_placed — the light's settings ride in the
+        // `parameters` bag that SceneObject already carries.
+        const objectId = ctx.newObjectId(action.name);
+        const name = uniqueName(action.name, byName);
+        byId.set(objectId, name);
+        byName.set(normalise(name), objectId);
+        events.push({
+          type: "object_placed",
+          t: ctx.t,
+          source: "model",
+          utterance: ctx.utterance,
+          objectId,
+          name,
+          assetId: lightAssetId(action.kind),
+          position: toVec3(action.position),
+          rotation: [0, 0, 0, 1],
+          scale: [1, 1, 1],
+          parameters: {
+            color: action.color,
+            intensity: clampIntensity(action.intensity),
+          },
+        });
+        break;
+      }
+
+      case "adjust_light": {
+        const id = resolve(action.objectId);
+        if (!id) {
+          dropped.push({ action, reason: `no light "${action.objectId}"` });
+          break;
+        }
+        // Two parameter_set events rather than one combined edit: each is
+        // independently undoable, which is what the single undo stack expects.
+        events.push({
+          type: "parameter_set",
+          t: ctx.t,
+          source: "model",
+          utterance: ctx.utterance,
+          objectId: id,
+          parameter: "intensity",
+          value: clampIntensity(action.intensity),
+        });
+        events.push({
+          type: "parameter_set",
+          t: ctx.t,
+          source: "model",
+          utterance: ctx.utterance,
+          objectId: id,
+          parameter: "color",
+          value: action.color,
+        });
+        break;
+      }
+
+      case "set_ambient":
+        events.push({
+          type: "environment_set",
+          t: ctx.t,
+          source: "model",
+          utterance: ctx.utterance,
+          environment: { ambientIntensity: clampIntensity(action.intensity) },
+        });
+        break;
+
       case "set_ground":
         events.push({
           type: "environment_set",
@@ -213,6 +279,11 @@ function yawToQuat(degrees: number): Quat {
 function uniformScale(s: number): Vec3 {
   const clamped = Math.min(100, Math.max(0.01, s));
   return [clamped, clamped, clamped];
+}
+
+/** Keeps a model-supplied intensity inside the range the client can render. */
+function clampIntensity(value: number): number {
+  return Math.min(LIGHT_INTENSITY.max, Math.max(LIGHT_INTENSITY.min, value));
 }
 
 function normalise(name: string): string {

@@ -36,6 +36,35 @@ const STYLE_WORDS: [GroundStyle, RegExp][] = [
  */
 const MAX_WORDS = 9;
 
+/**
+ * Overall brightness, the other half of §13's instant lighting.
+ *
+ * Relative only — "brighter", "darker". An absolute level ("set the lights to
+ * seven") is rare enough in speech that supporting it here would add ambiguity
+ * for no real gain, and it escalates cleanly.
+ *
+ * Returns the step to apply to the scene's current ambient level, or null to
+ * escalate. Deliberately refuses anything naming a specific light: "make the
+ * lamp brighter" is about one object and needs the model to resolve which.
+ */
+export function matchBrightnessCommand(text: string): number | null {
+  const normalised = text.toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  if (!normalised || normalised.split(" ").length > MAX_WORDS) return null;
+
+  // A named object means one light, not the room.
+  if (/\b(lamp|light|sun|bulb|candle|torch)s?\b/.test(normalised)) {
+    // ...unless it is unmistakably the whole room's lighting.
+    if (!/\b(the lights|all the lights|lighting)\b/.test(normalised)) return null;
+  }
+
+  const brighter = /\b(brighter|lighter|brighten|turn up|more light|too dark)\b/.test(normalised);
+  const darker = /\b(darker|dimmer|dim|darken|turn down|less light|too bright)\b/.test(normalised);
+  if (brighter === darker) return null; // neither, or contradictory
+
+  const much = /\b(much|way|a lot|loads|far)\b/.test(normalised) ? 2 : 1;
+  return (brighter ? 1 : -1) * 1.5 * much;
+}
+
 export function matchGroundCommand(text: string): GroundStyle | null {
   const normalised = text.toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
   if (!normalised) return null;

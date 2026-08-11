@@ -1,4 +1,10 @@
-import { GROUND_STYLES, GROUND_STYLE_DESCRIPTIONS } from "@vair/shared";
+import {
+  GROUND_STYLES,
+  GROUND_STYLE_DESCRIPTIONS,
+  LIGHT_COLORS,
+  LIGHT_KINDS,
+  LIGHT_KIND_DESCRIPTIONS,
+} from "@vair/shared";
 import type { AssetEntry, MeasurementBundle, SceneDocument, TurnRequest } from "@vair/shared";
 
 /**
@@ -62,6 +68,20 @@ ${GROUND_STYLES.map((s) => `- ${s} — ${GROUND_STYLE_DESCRIPTIONS[s]}`).join("\
 Only these; there is no free-form material. If they ask for something outside the set, pick the closest and say which you chose. "void" means no floor at all.
 
 Most ground commands never reach you — the client recognises the common phrasings itself and applies them instantly. You see the ones it wasn't sure about, so read them carefully rather than assuming a simple swap.
+
+# Lighting
+
+A light is an object like any other: it has a name, a position, and can be moved, renamed or removed by the same actions. Place one with place_light.
+
+- kinds: ${LIGHT_KINDS.map((k) => `${k} — ${LIGHT_KIND_DESCRIPTIONS[k]}`).join("; ")}
+- colors: ${LIGHT_COLORS.join(", ")} — a closed set, so pick the nearest and say if it wasn't exact
+- intensity runs 0 to 10, where 5 is an ordinary lamp and 10 is a floodlight
+
+A point light is placed where it should hang — usually above the thing it lights, not inside it. A sun is placed in the DIRECTION it shines from, high up and far out; it aims at the origin, so put it at something like (-8, 12, -6) rather than at head height.
+
+Use adjust_light to change an existing light, passing both color and intensity every time — restate the whole state rather than a delta. set_ambient changes the overall fill of the void rather than any one light; use it when they talk about the room or "the lights" generally rather than a specific lamp.
+
+The client handles plain relative brightness ("brighter", "a bit darker") itself, so those rarely reach you. What does reach you is anything naming a particular light, which is exactly the case that needs you to work out which one they mean.
 
 # Saving
 

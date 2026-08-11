@@ -160,6 +160,33 @@ stone with an honest note that there's no lava texture.
 This is the first thing to populate the `local` row in `npm run latency`, which is what makes the
 local-vs-server comparison in `tools/` mean anything.
 
+## Lights
+
+**A light is a scene object**, not a separate concept — `assetId: "light:point"` or
+`"light:sun"`, with colour and intensity in the `parameters` bag that `SceneObject` already
+carried. That wasn't a shortcut: it means "move the lamp", "get rid of the lamp", undo, save and
+reload all work with no new machinery, and adding lighting required **no new event type at all**
+(`object_placed` already had `parameters`; `parameter_set` already existed).
+
+```
+"put a warm light above the table"     → a point light, named, placed above it
+"add a low evening sun from the left"  → a directional sun, plus a drop in ambient
+"make it brighter" / "a bit darker"    → local, instant, no round trip
+"make the lamp brighter"               → escalates: which lamp is the model's job
+```
+
+Point lights get a small glowing marker, because an unlit point source is invisible by
+definition — without one you'd say "put a lamp there", the room would brighten, and there'd be
+nothing to look at, point at, or move. Suns get no marker: they're nominally infinitely far away,
+and a floating ball would be a lie about where the light is.
+
+Colours are a closed palette (`warm`, `candle`, `moonlight`, `amber`, …) for the same reason
+ground styles are: structured output is far more reliable on an enum than on a hex string, and the
+model can only ask for what the client can render. Intensity is 0–10 in the model's units, mapped
+to renderer units client-side and clamped on the way in.
+
+Shadows are off — they're a real cost on a Quest and §13's budget is already tight.
+
 ## Saving and reloading
 
 Say **"save this"** and the scene is stored under a name the model invents from what is actually

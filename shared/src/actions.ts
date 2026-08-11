@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { GROUND_STYLES } from "./ground.js";
+import { LIGHT_COLORS, LIGHT_KINDS } from "./lights.js";
 
 /**
  * The model-facing action vocabulary — the one validated schema boundary for
@@ -107,6 +108,41 @@ export const ModelAction = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("set_ground"),
     style: z.enum(GROUND_STYLES),
+  }),
+  /**
+   * "put a warm light above the table", "add a sun".
+   *
+   * Expands to an ordinary object_placed event — a light is a scene object, so
+   * it is named, movable, removable, saveable and undoable for free.
+   */
+  z.object({
+    action: z.literal("place_light"),
+    name: z.string(),
+    kind: z.enum(LIGHT_KINDS),
+    position: Vec3Object,
+    color: z.enum(LIGHT_COLORS),
+    /** 0 (off) to 10 (floodlight). 5 is an ordinary lamp. */
+    intensity: z.number(),
+  }),
+  /**
+   * "make the lamp warmer", "turn the sun down".
+   *
+   * Both fields are required, so the model always restates the whole state of
+   * the light rather than sending a delta the client would have to merge.
+   */
+  z.object({
+    action: z.literal("adjust_light"),
+    objectId: z.string(),
+    color: z.enum(LIGHT_COLORS),
+    intensity: z.number(),
+  }),
+  /**
+   * Overall brightness of the void itself, 0 to 10. Distinct from a placed
+   * light: this is the ambient fill that keeps unlit faces from going black.
+   */
+  z.object({
+    action: z.literal("set_ambient"),
+    intensity: z.number(),
   }),
 ]);
 export type ModelAction = z.infer<typeof ModelAction>;

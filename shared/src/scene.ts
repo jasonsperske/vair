@@ -43,7 +43,8 @@ export const Environment = z.object({
   groundMaterial: z.enum(GROUND_STYLES).default("grid"),
   /** 0..24, drives the ambient key shift in M5. */
   timeOfDay: z.number().min(0).max(24).default(12),
-  ambientIntensity: z.number().default(0.15),
+  /** 0..10 in the model's units; the client maps it to renderer units. */
+  ambientIntensity: z.number().default(2),
 });
 export type Environment = z.infer<typeof Environment>;
 
