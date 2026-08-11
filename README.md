@@ -18,7 +18,9 @@ into a scene document you can save, reload and share.
 | M1 — Voice loop | **passes on-device** — real speech transcribed and applied on a Quest 2 |
 | M2 — Temporal binding | **passes on-device** — "put a cube here" placed the cube where the user pointed |
 | M3 — Scene + Claude | **partial** — prompt, schema boundary, apply path, object naming and streaming progressive commit work end to end; the glTF pipeline does not, and first object lands at ~3.0s against a 2s target |
-| M4–M6 | not started |
+| M4 — Affordances | not started |
+| M5 — Audio | not started |
+| M6 — Persistence | **partial** — voice save, model auto-naming, reload and the scene library work; share links and the companion web app do not |
 
 §6 says to build temporal binding before anything that touches Claude, so the ring buffer and
 measurement-bundle resolver already exist. The M0 HUD prints the resolved point hit on every
@@ -112,6 +114,25 @@ Both paths share one timing synthesiser (`shared/src/mock-stt.ts`) so they canno
 measured from audio. It proves the pose lookup, clock conversion and buffer window work. It proves
 nothing about a real provider's accuracy, and `health.stt` being true because of it must never be
 read as "STT works" — that is why health reports `sttProvider` separately and the UI says "mock".
+
+## Saving and reloading
+
+Say **"save this"** and the scene is stored under a name the model invents from what is actually
+in it — a fire and two logs became "the campfire circle". Say **"save this as the reading room"**
+and that name is used verbatim. Both are the same code path: saving is a `save_scene` action, so
+the model that already has the utterance does the naming, and it costs no extra round trip. A
+client-side keyword match would have needed its own naming call and would miss every phrasing
+nobody thought of.
+
+Saved scenes appear on the landing page; clicking one replays it and enters VR.
+
+**What persists is the event log, not the folded document** (§8). The document is a fold and can
+always be recomputed; the log additionally carries the history — which is why a reloaded scene is
+identical rather than merely similar, and why editing continues cleanly on top of it. New object
+ids are collision-checked against the live scene rather than a counter, because a reloaded scene
+arrives with ids already in use.
+
+The markdown narrative is regenerated from scene state on every save and never read back as truth.
 
 ## The model boundary
 

@@ -70,6 +70,11 @@ export function foldScene(events: readonly SceneEvent[], now = 0): SceneDocument
         doc = { ...doc, environment: { ...doc.environment, ...e.environment } };
         break;
 
+      // A save names the scene, so replaying the log reproduces the name too.
+      case "scene_saved":
+        doc = { ...doc, id: e.sceneId, name: e.name };
+        break;
+
       case "undone":
         break;
     }

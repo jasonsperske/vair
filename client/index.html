@@ -57,6 +57,52 @@
         opacity: 0.35;
         cursor: default;
       }
+      #scenes {
+        margin-top: 2rem;
+        text-align: left;
+        max-width: 34ch;
+      }
+      #scenes h2 {
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        opacity: 0.4;
+        margin: 0 0 0.6rem;
+      }
+      #scene-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 0.4rem;
+      }
+      .scene {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid #232c4d;
+        border-radius: 0.6rem;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      .scene:hover {
+        border-color: #4a5bd0;
+        background: #0b1024;
+      }
+      .scene-name {
+        font-size: 0.95rem;
+      }
+      .scene-meta {
+        font-size: 0.78rem;
+        opacity: 0.45;
+        font-variant-numeric: tabular-nums;
+      }
     </style>
   </head>
   <body>
@@ -65,6 +111,11 @@
       <p>Virtual Artificial Intelligent Reality. Put the headset on and speak a world into existence.</p>
       <button id="enter-xr" disabled>Checking for WebXR…</button>
       <div id="status"></div>
+
+      <div id="scenes" hidden>
+        <h2>Saved scenes</h2>
+        <ul id="scene-list"></ul>
+      </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

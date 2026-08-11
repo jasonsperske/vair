@@ -17,6 +17,9 @@ export class SceneView {
     private readonly log: EventLogStore,
   ) {
     log.onAppend((e) => this.apply(e));
+    // A load replaces the whole log, so incremental application has nothing to
+    // work from — rebuild instead.
+    log.onReload(() => this.rebuild());
   }
 
   private apply(e: SceneEvent): void {
@@ -68,6 +71,9 @@ export class SceneView {
         this.rebuild();
         break;
 
+      // Neither changes the scene graph: a save names the scene, the others
+      // touch document-level state the fold already owns.
+      case "scene_saved":
       case "scene_created":
       case "parameter_set":
       case "environment_set":

@@ -383,6 +383,21 @@ key shift with time of day, thin out in empty scenes. Web Audio HRTF for object 
 **M6 — Persistence.** Save, auto-name, reload, derived markdown narrative, companion web
 library and share links.
 *Accept:* a scene built in VR reloads identically in a fresh session from a share URL.
+*Status:* **partial.** Save by voice, model auto-naming, reload, the derived narrative and a
+scene library on the landing page all work; **share links and the companion web app do not**,
+so the acceptance criterion's "from a share URL" is unmet.
+
+Saving is a `save_scene` action, not a client-side keyword match — the model already has the
+utterance, so "save this as the reading room" and "save this" are the same code path, and
+naming costs no extra round trip. Verified: "save this" over a fire and two logs produced
+"the campfire circle"; "save this as the reading room" was used verbatim.
+
+What persists is the **event log**, not the folded document (§8) — which is why a reloaded
+scene is identical rather than merely similar, and why editing continues cleanly afterward.
+Verified end to end: build two objects, "save this", reload the page, open it from the
+library, and both objects return at identical positions and scales with the scene's name
+intact; a following "add another cube next to the first one" resolved against the restored
+objects with no id collision.
 
 ---
 

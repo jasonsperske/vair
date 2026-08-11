@@ -25,6 +25,7 @@ export class EventLogStore {
   /** Index into `events` marking the last turn sent to the model. */
   private syncedUpTo = 0;
   private readonly listeners = new Set<(e: SceneEvent) => void>();
+  private readonly reloadListeners = new Set<() => void>();
   private cachedDoc: SceneDocument | null = null;
 
   append(event: NewSceneEvent): SceneEvent {
@@ -84,12 +85,21 @@ export class EventLogStore {
     return () => this.listeners.delete(cb);
   }
 
-  /** Load a shared scene: replay, don't reconstruct (M6 acceptance). */
+  /** Wholesale replacement, as opposed to an append. Drives a scene rebuild. */
+  onReload(cb: () => void): () => void {
+    this.reloadListeners.add(cb);
+    return () => this.reloadListeners.delete(cb);
+  }
+
+  /** Load a saved scene: replay, don't reconstruct (M6 acceptance). */
   load(events: readonly SceneEvent[]): void {
     this.events.length = 0;
     this.events.push(...events);
     this.seq = this.events.reduce((m, e) => Math.max(m, e.seq + 1), 0);
-    this.syncedUpTo = 0;
+    // The loaded events are history the model has never seen, so the next turn
+    // must not replay them as "changes since last turn".
+    this.syncedUpTo = this.events.length;
     this.cachedDoc = null;
+    for (const l of this.reloadListeners) l();
   }
 }

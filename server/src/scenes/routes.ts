@@ -28,14 +28,23 @@ scenesRouter.get("/", (_req, res) => {
   const files = existsSync(env.dataDir)
     ? readdirSync(env.dataDir).filter((f) => f.endsWith(".json"))
     : [];
-  const scenes = files.map((f) => {
-    const raw = JSON.parse(readFileSync(join(env.dataDir, f), "utf8")) as {
-      id: string;
-      name: string;
-      savedAt: number;
-    };
-    return { id: raw.id, name: raw.name, savedAt: raw.savedAt };
-  });
+  const scenes = files
+    .map((f) => {
+      const raw = JSON.parse(readFileSync(join(env.dataDir, f), "utf8")) as {
+        id: string;
+        name: string;
+        savedAt: number;
+        objectCount?: number;
+      };
+      return {
+        id: raw.id,
+        name: raw.name,
+        savedAt: raw.savedAt,
+        objectCount: raw.objectCount ?? 0,
+      };
+    })
+    // Newest first: the scene you want back is almost always the last one saved.
+    .sort((a, b) => b.savedAt - a.savedAt);
   res.json({ scenes });
 });
 
@@ -66,11 +75,13 @@ scenesRouter.post("/", (req, res) => {
     id,
     name,
     savedAt: Date.now(),
+    objectCount: doc.objects.length,
     events,
+    // Derived on every save and never read back as truth (§8).
     narrative: deriveNarrative({ ...doc, name }),
   };
   writeFileSync(path, JSON.stringify(payload, null, 2));
-  res.json({ id, savedAt: payload.savedAt, objects: doc.objects.length });
+  res.json({ id, name, savedAt: payload.savedAt, objectCount: doc.objects.length });
 });
 
 /** The id is regex-validated above, but path construction gets its own guard. */

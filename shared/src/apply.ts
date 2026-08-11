@@ -21,6 +21,8 @@ export type ApplyContext = {
   utterance: string;
   /** Mint a stable id for a newly placed object. */
   newObjectId(name: string): string;
+  /** Mint a storage id for a scene from its name. */
+  newSceneId(name: string): string;
 };
 
 export type ApplyResult = {
@@ -136,6 +138,21 @@ export function applyActions(
           utterance: ctx.utterance,
           objectId: id,
           name: uniqueName(action.name, byName),
+        });
+        break;
+      }
+
+      case "save_scene": {
+        // Persistence itself is a side effect the caller performs when it sees
+        // this event; the event exists so the save is in the history and the
+        // scene carries its name.
+        events.push({
+          type: "scene_saved",
+          t: ctx.t,
+          source: "model",
+          utterance: ctx.utterance,
+          sceneId: ctx.newSceneId(action.name),
+          name: action.name,
         });
         break;
       }

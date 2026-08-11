@@ -14,7 +14,15 @@ import { WispField } from "./vfx/wisps.js";
 import { DebugHud, type HudData } from "./debug/hud.js";
 import { earcons } from "./audio/earcons.js";
 import { AudioCapture } from "./audio/capture.js";
-import { health, streamTurn, transcribe } from "./net/api.js";
+import {
+  health,
+  listScenes,
+  loadScene,
+  saveScene,
+  streamTurn,
+  transcribe,
+  type SavedSceneSummary,
+} from "./net/api.js";
 import { LatencyTurn, newTurnId } from "./net/latency.js";
 import type { HandSide } from "./core/pose-buffer.js";
 
@@ -34,6 +42,8 @@ import type { HandSide } from "./core/pose-buffer.js";
 const overlay = document.getElementById("overlay") as HTMLDivElement;
 const button = document.getElementById("enter-xr") as HTMLButtonElement;
 const statusEl = document.getElementById("status") as HTMLDivElement;
+const scenesEl = document.getElementById("scenes") as HTMLDivElement;
+const sceneListEl = document.getElementById("scene-list") as HTMLUListElement;
 
 const runtime = createRuntime();
 const hands = new HandInput(runtime.renderer);
@@ -305,8 +315,14 @@ async function sendTurn(u: ResolvedUtterance): Promise<void> {
           t: Date.now(),
           utterance: u.text,
           newObjectId,
+          newSceneId,
         });
-        for (const event of events) log.append(event);
+        for (const event of events) {
+          log.append(event);
+          // Persistence is the side effect of the save event, performed once
+          // the event is in the log so the saved history includes the save.
+          if (event.type === "scene_saved") void persistScene(event.sceneId, event.name);
+        }
         applied += events.length;
         firstDrop ??= dropped[0]?.reason ?? null;
         note = `${applied} object${applied === 1 ? "" : "s"}…`;
@@ -345,14 +361,46 @@ function headYaw(): number {
 
 let objectCounter = 0;
 
-/** Stable, readable, and unique within the session. */
+function slugify(name: string, max: number): string {
+  return (
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, max) || "untitled"
+  );
+}
+
+/**
+ * Stable, readable, unique. Collision-checked against the live scene rather
+ * than trusting a counter: a reloaded scene arrives with ids already in use,
+ * and a fresh counter would happily mint a duplicate.
+ */
 function newObjectId(name: string): string {
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 24);
-  return `${slug || "object"}-${objectCounter++}`;
+  const base = slugify(name, 24);
+  const taken = new Set(log.scene().objects.map((o) => o.id));
+  for (;;) {
+    const candidate = `${base}-${objectCounter++}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+}
+
+/** Storage id for a scene. Saving under a name already used overwrites it. */
+function newSceneId(name: string): string {
+  return slugify(name, 48);
+}
+
+/** Write the whole event log to the server (§8 — the log is what persists). */
+async function persistScene(id: string, name: string): Promise<void> {
+  try {
+    await saveScene(id, name, log.all());
+    savedScenes = await listScenes();
+    renderSceneList();
+  } catch (err) {
+    // The model has already said "saved" by now, so a silent failure would be
+    // a lie. Surface it where the user can see it.
+    note = `save failed: ${err instanceof Error ? err.message : String(err)}`;
+  }
 }
 
 function resolveOptions(): ResolveOptions {
@@ -464,6 +512,84 @@ function hudData(): HudData {
   };
 }
 
+/* ------------------------------------------------------- scene library --- */
+
+let savedScenes: SavedSceneSummary[] = [];
+
+/**
+ * The landing page doubles as the scene library. Authoring happens only in VR
+ * (§10) — this lists what exists and opens it, and does nothing else.
+ */
+function renderSceneList(): void {
+  scenesEl.hidden = savedScenes.length === 0;
+  sceneListEl.replaceChildren();
+
+  for (const scene of savedScenes) {
+    const item = document.createElement("li");
+    const open = document.createElement("button");
+    open.className = "scene";
+    // textContent, not innerHTML: scene names are model-authored text and this
+    // is the one place they reach the DOM.
+    const title = document.createElement("span");
+    title.className = "scene-name";
+    title.textContent = scene.name;
+    const meta = document.createElement("span");
+    meta.className = "scene-meta";
+    meta.textContent = `${scene.objectCount} object${scene.objectCount === 1 ? "" : "s"} · ${relativeTime(scene.savedAt)}`;
+
+    open.append(title, meta);
+    open.addEventListener("click", () => {
+      void enterWithScene(scene);
+    });
+    item.append(open);
+    sceneListEl.append(item);
+  }
+}
+
+function relativeTime(at: number): string {
+  const seconds = Math.max(0, (Date.now() - at) / 1000);
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86_400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86_400)}d ago`;
+}
+
+async function refreshSceneList(): Promise<void> {
+  try {
+    savedScenes = await listScenes();
+    renderSceneList();
+  } catch {
+    // Server down: the library simply isn't offered. M0 runs standalone.
+    scenesEl.hidden = true;
+  }
+}
+
+/** Replay a saved scene, then enter. The log is loaded before the session so
+ * the void is never briefly empty in front of the user. */
+async function enterWithScene(scene: SavedSceneSummary): Promise<void> {
+  statusEl.textContent = `loading “${scene.name}”…`;
+  try {
+    const saved = await loadScene(scene.id);
+    log.load(saved.events);
+    objectCounter = 0;
+    await enterXR();
+  } catch (err) {
+    statusEl.textContent = `could not load: ${err instanceof Error ? err.message : String(err)}`;
+  }
+}
+
+async function enterXR(): Promise<void> {
+  // The XR entry click is the only reliable user gesture we get, so the audio
+  // context is unlocked here or never.
+  const ctx = earcons.unlock();
+  clock.align(ctx);
+  try {
+    await runtime.enter();
+  } catch (err) {
+    statusEl.textContent = `session failed: ${String(err)}`;
+  }
+}
+
 async function boot(): Promise<void> {
   const supported = await isSupported();
   if (!supported) {
@@ -483,19 +609,14 @@ async function boot(): Promise<void> {
       statusEl.textContent = h.ok
         ? `server up · stt ${stt} · claude ${h.claude ? "ready" : "not configured"}`
         : "server unreachable — M0 runs standalone";
+      if (h.ok) void refreshSceneList();
     })
     .catch(() => {
       statusEl.textContent = "server unreachable — M0 runs standalone";
     });
 
   button.addEventListener("click", () => {
-    // The XR entry click is the only reliable user gesture we get, so the audio
-    // context is unlocked here or never.
-    const ctx = earcons.unlock();
-    clock.align(ctx);
-    void runtime.enter().catch((err: unknown) => {
-      statusEl.textContent = `session failed: ${String(err)}`;
-    });
+    void enterXR();
   });
 
   runtime.onSessionChange((present) => {

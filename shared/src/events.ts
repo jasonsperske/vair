@@ -82,6 +82,17 @@ export const SceneEvent = z.discriminatedUnion("type", [
     environment: Environment.partial(),
   }),
   /**
+   * A save is a command, so it appends like any other (§8). It also names the
+   * scene — which is state, not just history, so the fold applies it and a
+   * reloaded scene knows what it is called.
+   */
+  z.object({
+    ...base,
+    type: z.literal("scene_saved"),
+    sceneId: z.string(),
+    name: z.string(),
+  }),
+  /**
    * Undo is itself an event. The fold skips the referenced event rather than
    * truncating the log, so history stays replayable and shareable.
    */
@@ -97,7 +108,10 @@ export type SceneEventType = SceneEvent["type"];
 export const EventLog = z.array(SceneEvent);
 export type EventLog = z.infer<typeof EventLog>;
 
-/** Events that an `undone` event may target. */
+/**
+ * Events that an `undone` event may target. Saves are excluded: "undo" after a
+ * save should take back the last scene change, not silently unname the scene.
+ */
 export function isUndoable(e: SceneEvent): boolean {
-  return e.type !== "undone" && e.type !== "scene_created";
+  return e.type !== "undone" && e.type !== "scene_created" && e.type !== "scene_saved";
 }

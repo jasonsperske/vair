@@ -1,12 +1,14 @@
 import {
   AssetCatalogue,
+  EventLog,
   TranscriptResponse,
   TurnStreamEvent,
   type LatencySample,
   type ModelAction,
+  type SceneEvent,
   type TurnRequest,
 } from "@vair/shared";
-import type { z } from "zod";
+import { z } from "zod";
 
 /**
  * plan.md §14 — no API key ever reaches the client. Every model, STT and asset
@@ -137,6 +139,55 @@ export async function streamTurn(
 export async function catalogue(query?: string): Promise<AssetCatalogue> {
   const url = query ? `${BASE}/assets?q=${encodeURIComponent(query)}` : `${BASE}/assets`;
   return parseJson(await fetch(url), AssetCatalogue);
+}
+
+/* -------------------------------------------------------------- scenes --- */
+
+export const SavedSceneSummary = z.object({
+  id: z.string(),
+  name: z.string(),
+  savedAt: z.number(),
+  objectCount: z.number(),
+});
+export type SavedSceneSummary = z.infer<typeof SavedSceneSummary>;
+
+const SceneList = z.object({ scenes: z.array(SavedSceneSummary) });
+
+const SavedScene = z.object({
+  id: z.string(),
+  name: z.string(),
+  savedAt: z.number(),
+  events: EventLog,
+});
+
+export async function listScenes(): Promise<SavedSceneSummary[]> {
+  const parsed = await parseJson(await fetch(`${BASE}/scenes`), SceneList);
+  return parsed.scenes;
+}
+
+/**
+ * We store the event LOG, not the folded document (§8). The document is a fold
+ * and can always be recomputed; the log additionally carries undo, replay and
+ * history — and replaying it is what makes a reloaded scene identical to the
+ * session that built it.
+ */
+export async function saveScene(
+  id: string,
+  name: string,
+  events: readonly SceneEvent[],
+): Promise<void> {
+  const res = await fetch(`${BASE}/scenes`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ id, name, events }),
+  });
+  if (!res.ok) {
+    throw new ApiError((await res.text().catch(() => "")) || res.statusText, res.status);
+  }
+}
+
+export async function loadScene(id: string): Promise<z.infer<typeof SavedScene>> {
+  return parseJson(await fetch(`${BASE}/scenes/${encodeURIComponent(id)}`), SavedScene);
 }
 
 /**

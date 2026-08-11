@@ -71,6 +71,18 @@ export const ModelAction = z.discriminatedUnion("action", [
     action: z.literal("remove_object"),
     objectId: z.string(),
   }),
+  /**
+   * "save this" / "save this as the campfire".
+   *
+   * The name is required, so the model always supplies one: verbatim when the
+   * user said it, invented from what is actually in the scene when they didn't.
+   * Naming therefore costs no extra round trip — it falls out of the turn that
+   * was already happening.
+   */
+  z.object({
+    action: z.literal("save_scene"),
+    name: z.string(),
+  }),
 ]);
 export type ModelAction = z.infer<typeof ModelAction>;
 
