@@ -63,9 +63,19 @@ Sketchfab CC0). Loaded at runtime via `GLTFLoader` with a Draco/Meshopt pipeline
 **Server:** Node + TypeScript. Holds all API keys. Endpoints for STT, Claude, asset
 catalogue, scene persistence.
 **Model:** Claude via the Anthropic API, structured JSON output.
-**STT:** cloud Whisper (or equivalent) with **word-level timestamps** — this is a hard
-requirement, not a preference. See §6.
-**Target device:** Quest 3 / 3S. Quest 2 is not a target (6GB RAM, half the GPU).
+**STT:** **Vosk, local and offline** — no key, no rate limit, no network. Word-level
+timestamps remain a hard requirement, not a preference (see §6), and Vosk emits them
+natively as `{word, start, end, conf}`. This replaces the original "cloud Whisper (or
+equivalent)": the requirement that decides the provider is word timings, not hosting, and
+the local option cleared it at zero cost. Measured on a 2-core i3: 0.09x realtime, so a 3s
+utterance decodes in ~0.3s. The tradeoff is accuracy on proper nouns; a larger model is a
+`VOSK_MODEL_PATH` change and a cloud provider drops in behind the same `STT_PROVIDER`
+switch.
+**Target device:** Quest 3 / 3S remains the **performance** target — the 60–70% budget in
+§13 assumes it. **Development and testing is on a Quest 2**, where M1 and M2 both pass.
+Quest 2 is not a shipping target (6GB RAM, half the GPU) and its hand tracking is weaker,
+so any reliability figure measured there is a pessimistic bound — record the device
+alongside the number or a later Quest 3 run will look like a regression.
 
 ### Why WebXR and not Unity
 
@@ -113,7 +123,14 @@ when the utterance ended. By the time a transcript returns, the hand has moved.
 
 1. **Pose ring buffer.** Every XR frame, record `{ xrTime, head, leftHand, rightHand,
    leftController, rightController }` into a fixed-size circular buffer covering the last
-   ~10 seconds. Never allocate in the hot loop.
+   **~20 seconds**. Never allocate in the hot loop.
+
+   This was originally ~10s, which contradicted §7: utterances are capped at 15s, and the
+   word being looked up is the *first* word of the sentence, looked up only after the
+   transcript returns. A 10s buffer therefore drops the deictic word of any long utterance
+   before it is needed. Built at 2048 slots — ~22s at 90Hz, ~17s at 120Hz — which is 256KB
+   and irrelevant next to a single glTF. Queries outside the window return null rather than
+   clamping: a clamped pose is a wrong answer wearing the costume of a right one.
 2. **Audio capture with timestamps.** Record the utterance with a start timestamp captured
    from the same clock domain as the XR frame time. Persist the offset between
    `AudioContext.currentTime` and `XRFrame` time at capture start; you will need it and it
@@ -167,8 +184,17 @@ The controller trigger is an always-available equivalent and must never be remov
 
 ### Rules
 
-- **Latch, not hold.** The pinch starts listening and releases immediately. Holding the
-  pose through the utterance would occupy the hand needed for pointing.
+- **The pinch latches; the trigger holds.** The pinch starts listening and releases
+  immediately — holding the pose through the utterance would occupy the hand needed for
+  pointing. That objection does not transfer to a controller, which *is* the pointer, so
+  the trigger is hold-to-talk: hold while speaking, release to commit. Do not "simplify"
+  the trigger back to a latch by citing this rule; the rule is about the hand.
+  - A trigger tap under 300ms falls back to latching, so a quick pull cannot commit an
+    empty utterance and both gestures share one button.
+  - While the trigger is held the silence backstop below is **suppressed**: it exists
+    because a missed commit gesture must never strand the user, and a held trigger cannot
+    miss its commit. Pausing mid-sentence must not cut the speaker off. The 15s hard cap
+    still applies.
 - **Backstop:** auto-commit after 1.5s of silence and hard-cap utterances at 15s. A missed
   commit gesture must never strand the user in `LISTENING`.
 - **Show the transcript** as floating text before the round trip. STT error is the most
@@ -313,7 +339,7 @@ exercised on-device from M0. Interpolation error measured at <0.01mm against a s
 90Hz track. Buffer holds ~22s at 90Hz, sized to exceed the 15s utterance cap plus the STT
 round trip.
 
-**M1 — Voice loop.** Gesture-gated audio capture, upload, cloud STT, floating transcript,
+**M1 — Voice loop.** Gesture-gated audio capture, upload, STT, floating transcript,
 full state machine driving wisp behaviour, cancel, silence backstop.
 *Accept:* speak a sentence, see an accurate transcript within 1.5s, cancel mid-flight.
 *Status:* **PASSES on-device.** Real speech on a Quest 2 produced an accurate transcript
@@ -411,6 +437,14 @@ objects with no id collision.
 
 - Ground plane, sky, lighting and object *movement* are **local and instant**. Never a
   round trip. If picking up a named object takes 2s the illusion dies.
+
+  > **Currently unmet, both halves.** There is no ground plane, sky or lighting control at
+  > all: `environment_set` is handled in the client's scene view but nothing emits it, and
+  > deixis raycasts an *invisible* y=0 plane — pointing at the floor works while the user
+  > sees nothing there. And `move` / `scale` / `rotate` all route through the model at ~3s,
+  > which is exactly the 2s-to-pick-up failure this rule forbids. The movement half is what
+  > M4's affordance fast path is for; the ground plane is local, needs no model, and is
+  > independent of it.
 - Under 5s from utterance to first visible change feels like magic; over 15s feels broken.
 - Browser heap will hit limits before native would. Implement asset eviction from M3, not
   later.
