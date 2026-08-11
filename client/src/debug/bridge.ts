@@ -36,6 +36,8 @@ export type BridgeDeps = {
   presenting(): boolean;
   /** Live voice-gate reading, for tuning the VAD in a real room. */
   voice?(): { rms: number; gate: number; voice: boolean };
+  setHandsVisible?(visible: boolean): void;
+  handsVisible?(): boolean;
 };
 
 type SayOptions = { durationMs?: number; hand?: HandSide };
@@ -80,6 +82,12 @@ export function installDebugBridge(deps: BridgeDeps): void {
     press(side: HandSide = "right") {
       deps.machine.press(side, deps.now());
       return deps.machine.state;
+    },
+
+    /** Show or hide the rendered hand joints. */
+    hands(visible?: boolean) {
+      if (visible !== undefined) deps.setHandsVisible?.(visible);
+      return { visible: deps.handsVisible?.() ?? null };
     },
 
     arm(text: string, opts: SayOptions = {}) {

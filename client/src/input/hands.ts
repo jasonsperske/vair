@@ -37,6 +37,8 @@ export type SourceState = {
   active: boolean;
   /** True on the single frame the pose latched. */
   justPressed: boolean;
+  /** True on the single frame it was let go. Drives hold-to-talk. */
+  justReleased: boolean;
   suppressedByPalmFacing: boolean;
   pinchDistance: number;
 };
@@ -104,6 +106,8 @@ export class HandInput {
   update(xrTime: number, headPosition: Vector3): void {
     this.left.justPressed = false;
     this.right.justPressed = false;
+    this.left.justReleased = false;
+    this.right.justReleased = false;
     this.left.tracked = false;
     this.right.tracked = false;
 
@@ -117,11 +121,15 @@ export class HandInput {
       } else if (this.updateFromController(slot, out)) {
         // controller fallback
       } else {
+        // Losing tracking mid-hold reads as a release rather than a stuck
+        // button, so an utterance still commits if the controller vanishes.
+        out.justReleased = wasActive;
         out.active = false;
         continue;
       }
 
       out.justPressed = out.active && !wasActive;
+      out.justReleased = !out.active && wasActive;
     }
   }
 
@@ -212,6 +220,7 @@ function blankState(side: HandSide): SourceState {
     palmNormal: new Vector3(0, -1, 0),
     active: false,
     justPressed: false,
+    justReleased: false,
     suppressedByPalmFacing: false,
     pinchDistance: Number.NaN,
   };

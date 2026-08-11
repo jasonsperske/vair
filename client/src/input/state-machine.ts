@@ -25,11 +25,31 @@ export type MachineEvents = {
   /** Begin audio capture. The hand that latched is passed for haptics. */
   onListenStart(side: HandSide, xrTime: number): void;
   /** Stop capture and upload. `reason` distinguishes the backstops for tools/. */
-  onListenStop(reason: "commit" | "silence" | "timeout", xrTime: number): void;
+  onListenStop(reason: "commit" | "release" | "silence" | "timeout", xrTime: number): void;
   /** plan.md §7 — a new pinch during THINKING aborts rather than queues. */
   onCancel(): void;
   onStateChange(next: InteractionState, prev: InteractionState): void;
 };
+
+/**
+ * How the current utterance was started.
+ *
+ * `latch` is the pinch (§7): press starts, press again commits. Holding a pinch
+ * through an utterance would occupy the hand needed for pointing, which is why
+ * the plan rules it out.
+ *
+ * `hold` is the controller trigger: down starts, up commits. The objection to
+ * holding does not apply here — the controller *is* the pointer, so a held
+ * trigger leaves aiming completely intact.
+ */
+export type ListenMode = "latch" | "hold";
+
+/**
+ * A trigger tap shorter than this is treated as a latch instead of a hold, so a
+ * quick pull does not commit an utterance containing nothing. Both gestures
+ * therefore work on the same button: tap to latch, hold to talk.
+ */
+const MIN_HOLD_MS = 300;
 
 export class InteractionMachine {
   private _state: InteractionState = "IDLE";
@@ -37,6 +57,7 @@ export class InteractionMachine {
   private lastVoiceAt = 0;
   private failedAt = 0;
   private activeSide: HandSide = "right";
+  private activeMode: ListenMode = "latch";
 
   constructor(private readonly events: MachineEvents) {}
 
@@ -53,12 +74,13 @@ export class InteractionMachine {
    * A latched pinch or trigger press. Same entry point for both paths on
    * purpose: the user must never be able to tell which one they used.
    */
-  press(side: HandSide, xrTime: number): void {
+  press(side: HandSide, xrTime: number, mode: ListenMode = "latch"): void {
     switch (this._state) {
       case "IDLE":
       case "NEEDS_INPUT":
       case "FAILED":
         this.activeSide = side;
+        this.activeMode = mode;
         this.listenStartedAt = xrTime;
         this.lastVoiceAt = xrTime;
         this.to("LISTENING");
@@ -81,6 +103,26 @@ export class InteractionMachine {
     }
   }
 
+  /**
+   * The held control was let go. Commits, unless the hold was too brief to be
+   * one — in which case it becomes a latch and listening continues.
+   *
+   * Ignored entirely for a latched utterance, so releasing a pinch (which
+   * happens immediately, by design) never commits.
+   */
+  release(side: HandSide, xrTime: number): void {
+    if (this._state !== "LISTENING") return;
+    if (this.activeMode !== "hold" || side !== this.activeSide) return;
+
+    if (xrTime - this.listenStartedAt < MIN_HOLD_MS) {
+      this.activeMode = "latch";
+      return;
+    }
+
+    this.to("TRANSCRIBING");
+    this.events.onListenStop("release", xrTime);
+  }
+
   /** Called by the VAD while voice energy is present (M1). */
   noteVoice(xrTime: number): void {
     if (this._state === "LISTENING") this.lastVoiceAt = xrTime;
@@ -92,7 +134,14 @@ export class InteractionMachine {
       if (xrTime - this.listenStartedAt > MAX_UTTERANCE_MS) {
         this.to("TRANSCRIBING");
         this.events.onListenStop("timeout", xrTime);
-      } else if (xrTime - this.lastVoiceAt > SILENCE_COMMIT_MS) {
+      } else if (
+        // The silence backstop exists because a missed commit gesture must
+        // never strand the user (§7). A held trigger cannot miss its commit —
+        // letting go is the commit — so pausing mid-sentence while holding
+        // must not cut the user off. The hard cap still applies.
+        this.activeMode !== "hold" &&
+        xrTime - this.lastVoiceAt > SILENCE_COMMIT_MS
+      ) {
         this.to("TRANSCRIBING");
         this.events.onListenStop("silence", xrTime);
       }

@@ -50,6 +50,30 @@ opens it to the LAN — but you will then need HTTPS to get the microphone in M1
 Enable Developer Mode from the Meta mobile app first; it is not discoverable in-headset.
 Remote-debug via `chrome://inspect`.
 
+## Talking to it
+
+Two gestures, deliberately different:
+
+- **Pinch (thumb to middle finger) latches.** Press to start, press again to commit. §7 rules out
+  holding a pinch through an utterance because it occupies the hand you need for pointing.
+- **Controller trigger is hold-to-talk.** Hold it down while speaking, release to commit. The
+  objection above doesn't apply — the controller *is* the pointer, so a held trigger leaves aiming
+  intact.
+
+A trigger tap shorter than 300ms is treated as a latch instead, so a quick pull doesn't commit an
+empty utterance. Both gestures therefore live on the same button: tap to latch, hold to talk.
+
+**While the trigger is held, the 1.5s silence backstop is suppressed.** That backstop exists
+because a missed commit gesture must never strand the user, and a held trigger can't miss its
+commit — letting go *is* the commit. Pausing mid-sentence while holding must not cut you off. The
+15s hard cap still applies.
+
+Hands are drawn as one sphere per tracked joint, sized by the joint's own radius. Toggle with
+`window.vair.hands(false)`. They're rendered directly rather than via three's
+`XRHandModelFactory`, whose only lifelike profile fetches a glTF from a CDN — the headset reaches
+this app over `adb reverse` on localhost and may have no route to the internet, which would leave
+you with invisible hands and no obvious reason why.
+
 ## Speech to text
 
 **Vosk, offline and local.** Word-level timestamps are a hard requirement (§6.3), which

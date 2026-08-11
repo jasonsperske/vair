@@ -44,6 +44,12 @@ the same job at the `/api/stt` boundary.
 Neither is a fallback. If a real provider turns out not to emit word-level timestamps, the answer
 is a different provider, not the mock (§6.3).
 
+**Latch and hold are both correct, on different controls.** §7's "latch, not hold" is about the
+pinch, whose rationale is that a held pinch occupies the pointing hand. Controller triggers are
+hold-to-talk because the controller is the pointer, so the rationale doesn't transfer. Don't
+"fix" the trigger back to a latch by citing §7. While a trigger is held the silence backstop is
+suppressed on purpose — the release is the commit and cannot be missed.
+
 **Never turn `autoGainControl` back on in the capture constraints.** AGC rides the gain up
 during quiet passages, so a silent room measures at speech levels (0.003–0.152 RMS observed) and
 no voice-activity threshold can work. The §7 silence backstop stops firing entirely and every

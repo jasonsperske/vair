@@ -295,6 +295,12 @@ current one passes on-device.
 **M0 — Void.** WebXR session, black environment, wisp particle system, hand tracking with
 25 joints, thumb-middle pinch detection with hysteresis, controller fallback, haptic tick.
 *Accept:* pinch reliably toggles a debug indicator across 50 trials on-device, both hands.
+*Also built:* controller triggers are hold-to-talk (hold to speak, release to commit) while the
+pinch stays a latch — §7's objection to holding is that it occupies the pointing hand, which does
+not apply to a controller that IS the pointer. A sub-300ms tap falls back to latching, and the
+silence backstop is suppressed while held since the release cannot be a missed commit. Hands are
+drawn as one sphere per tracked joint, rendered locally rather than via three's CDN-fetched hand
+mesh so they work with no internet route.
 *Status:* implemented — **awaiting on-device acceptance run**. Verified in the Immersive Web
 Emulator (Quest 3 profile, head at 1.60m): session enters, void + wisps + HUD render at ~60fps,
 both controller triggers latch correctly with independent per-hand counters, and the state

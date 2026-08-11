@@ -11,6 +11,7 @@ import { EventLogStore } from "./scene/event-log.js";
 import { ObjectRegistry } from "./scene/registry.js";
 import { SceneView } from "./scene/view.js";
 import { WispField } from "./vfx/wisps.js";
+import { HandModels } from "./vfx/hand-models.js";
 import { DebugHud, type HudData } from "./debug/hud.js";
 import { earcons } from "./audio/earcons.js";
 import { AudioCapture } from "./audio/capture.js";
@@ -47,6 +48,7 @@ const sceneListEl = document.getElementById("scene-list") as HTMLUListElement;
 
 const runtime = createRuntime();
 const hands = new HandInput(runtime.renderer);
+const handModels = new HandModels(runtime.renderer, runtime.root);
 const wisps = new WispField();
 const hud = new DebugHud();
 const log = new EventLogStore();
@@ -468,6 +470,8 @@ runtime.onFrame(({ xrTime, dt, frame, referenceSpace }) => {
   }
 
   hands.update(xrTime, headPosition);
+  // After hands.update so the joint world matrices are current this frame.
+  handModels.update();
 
   // Record every frame, unconditionally. A buffer with gaps in it is a buffer
   // that silently returns the wrong pose for exactly the moments that matter.
@@ -485,8 +489,17 @@ runtime.onFrame(({ xrTime, dt, frame, referenceSpace }) => {
     );
   }
 
-  if (hands.left.justPressed) machine.press("left", xrTime);
-  if (hands.right.justPressed) machine.press("right", xrTime);
+  // Hands latch (§7 — a held pinch would occupy the pointing hand); controller
+  // triggers hold-to-talk, where that objection doesn't apply because the
+  // controller is the pointer. A short trigger tap falls back to latching.
+  if (hands.left.justPressed) {
+    machine.press("left", xrTime, hands.left.isHand ? "latch" : "hold");
+  }
+  if (hands.right.justPressed) {
+    machine.press("right", xrTime, hands.right.isHand ? "latch" : "hold");
+  }
+  if (hands.left.justReleased) machine.release("left", xrTime);
+  if (hands.right.justReleased) machine.release("right", xrTime);
 
   // Voice activity feeds the 1.5s silence backstop (§7). Sampled only while
   // listening: the analyser is meaningless otherwise and the mic may be shut.
@@ -694,6 +707,10 @@ async function boot(): Promise<void> {
           if (!capture.ready) void capture.prepare();
           return capture.sample();
         },
+        setHandsVisible: (v) => {
+          handModels.visible = v;
+        },
+        handsVisible: () => handModels.visible,
       });
     });
   }
