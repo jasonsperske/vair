@@ -310,7 +310,8 @@ round trip.
 **M1 — Voice loop.** Gesture-gated audio capture, upload, cloud STT, floating transcript,
 full state machine driving wisp behaviour, cancel, silence backstop.
 *Accept:* speak a sentence, see an accurate transcript within 1.5s, cancel mid-flight.
-*Status:* implemented end to end — **awaiting on-device acceptance**. Gesture-gated capture,
+*Status:* **PASSES on-device.** Real speech on a Quest 2 produced an accurate transcript
+and placed the object correctly. Gesture-gated capture,
 upload, transcription, floating transcript, cancel, silence backstop and the §16 stage
 instrumentation all run. Measured: backstop fires at 1501ms, Vosk returns in 451ms
 including upload and transcode. Not yet verified with real speech on the headset, which is
@@ -340,6 +341,10 @@ that yields silence is the failure mode that would actually bite.
 **M2 — Temporal binding.** Pose ring buffer, word-level timestamps, measurement bundle,
 deixis resolution. Hardcoded object types only.
 *Accept:* the §6 acceptance test passes.
+*Status:* **PASSES on-device.** "Put a cube here" while pointing placed the cube at the
+pointed-at spot on a Quest 2 — temporal binding, the pose ring buffer, word-level timings
+and deixis resolution all confirmed working against real speech and real hand tracking.
+Formal 20-trial accuracy measurement still outstanding.
 
 **M3 — Scene + Claude.** Scene schema, event log, backend proxy, asset catalogue, object
 naming, streaming progressive commit (ground plane and lighting instant; objects populate

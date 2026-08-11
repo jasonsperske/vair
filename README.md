@@ -15,8 +15,8 @@ into a scene document you can save, reload and share.
 | Milestone | State |
 |---|---|
 | M0 — Void | implemented, **awaiting on-device acceptance** (50 pinch trials, both hands) |
-| M1 — Voice loop | implemented end to end, **awaiting on-device acceptance** with real speech |
-| M2 — Temporal binding | pose ring buffer + deixis resolver built early per §6; word timings pending M1 |
+| M1 — Voice loop | **passes on-device** — real speech transcribed and applied on a Quest 2 |
+| M2 — Temporal binding | **passes on-device** — "put a cube here" placed the cube where the user pointed |
 | M3 — Scene + Claude | **partial** — prompt, schema boundary, apply path, object naming and streaming progressive commit work end to end; the glTF pipeline does not, and first object lands at ~3.0s against a 2s target |
 | M4–M6 | not started |
 
@@ -76,9 +76,9 @@ rather than promising capture that would fail on first use.
 
 ## Mock STT / debug bridge
 
-There is no microphone capture yet (M1), so the transcript path is driven by a mock. Two ways in,
-both feeding the **real** state machine, deixis resolver and pose ring buffer — only the mic and
-the provider are substituted.
+Real capture works, but a mock is still the fastest way to iterate without speaking aloud — and
+the only way to test on a machine with no microphone. Two ways in, both feeding the **real** state
+machine, deixis resolver and pose ring buffer; only the mic and the provider are substituted.
 
 **From the browser** (dev builds only, tree-shaken out of production):
 
