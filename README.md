@@ -15,7 +15,7 @@ into a scene document you can save, reload and share.
 | Milestone | State |
 |---|---|
 | M0 — Void | implemented, **awaiting on-device acceptance** (50 pinch trials, both hands) |
-| M1 — Voice loop | not started (server returns 501 from `/api/stt`) |
+| M1 — Voice loop | **partial** — state machine, cancel, backstops and offline Vosk STT work; gesture-gated audio capture is not built, pending the in-session mic probe |
 | M2 — Temporal binding | pose ring buffer + deixis resolver built early per §6; word timings pending M1 |
 | M3 — Scene + Claude | **partial** — prompt, schema boundary, apply path, object naming and streaming progressive commit work end to end; the glTF pipeline does not, and first object lands at ~3.0s against a 2s target |
 | M4–M6 | not started |
@@ -47,6 +47,32 @@ opens it to the LAN — but you will then need HTTPS to get the microphone in M1
 
 Enable Developer Mode from the Meta mobile app first; it is not discoverable in-headset.
 Remote-debug via `chrome://inspect`.
+
+## Speech to text
+
+**Vosk, offline and local.** Word-level timestamps are a hard requirement (§6.3), which
+disqualifies the obvious free option outright: the Web Speech API returns none, and the Quest
+browser doesn't implement it anyway. Vosk clears the requirement natively — its word objects are
+already `{word, start, end, conf}` in seconds — costs nothing, needs no key, and works offline.
+
+```bash
+npm run stt:model                 # 40MB download, 68MB on disk, gitignored
+STT_PROVIDER=vosk npm run dev:server
+```
+
+Needs `ffmpeg` on PATH to transcode the browser's WebM/Opus to 16kHz mono PCM.
+
+Measured on a 2-core i3 with the small English model: **0.09× realtime** — 727ms to decode 8.3s
+of audio, so a 3s utterance lands in roughly 0.3s, comfortably inside M1's 1.5s criterion. The
+model loads once at ~255ms and is held for the process lifetime.
+
+The accuracy tradeoff is real: the small model handles command-shaped utterances well and mangles
+proper nouns. A larger model is a `VOSK_MODEL_PATH` change and nothing else. If accuracy turns
+out to matter more than offline operation, a cloud provider with word timestamps drops in behind
+the same `STT_PROVIDER` switch — that's the §11 "one harness, swappable pipelines" shape.
+
+`health.stt` stays false until the model is actually on disk, so the client says "not configured"
+rather than promising capture that would fail on first use.
 
 ## Mock STT / debug bridge
 

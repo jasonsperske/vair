@@ -21,6 +21,7 @@
     "build": "npm run build --workspace @vair/client && npm run build --workspace @vair/web",
     "typecheck": "tsc -p shared/tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit && tsc -p server/tsconfig.json --noEmit && tsc -p tools/tsconfig.json --noEmit",
     "headset": "adb reverse tcp:5173 tcp:5173 && adb reverse tcp:8787 tcp:8787",
+    "stt:model": "mkdir -p server/models && curl -fL --progress-bar -o /tmp/vosk-model.zip https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip && unzip -oq /tmp/vosk-model.zip -d server/models && rm -f /tmp/vosk-model.zip && echo 'vosk model ready in server/models/'",
     "latency": "npm run latency --workspace @vair/tools"
   },
   "devDependencies": {

@@ -47,6 +47,7 @@ export function installDebugBridge(deps: BridgeDeps): void {
         'vair.say("put a cube here")      — full mock utterance, returns resolved measurements',
         'vair.say(text, { durationMs, hand }) — durationMs back-dates the utterance over real motion',
         'vair.arm("…") then pull a trigger — same thing, but you drive the gesture yourself',
+        "await vair.probeMic()             — M1 gate: does the mic work IN-SESSION? speak while it runs",
         "vair.press('left'|'right')        — simulate a pinch/trigger latch",
         "vair.state()                      — interaction state, tracking, counters, fps",
         'vair.measure("here", msAgo)       — resolve one measurement bundle directly',
@@ -102,6 +103,107 @@ export function installDebugBridge(deps: BridgeDeps): void {
       deps.machine.press(hand, now); // -> commit, transcribe, resolve
 
       return deps.lastUtterance() ?? { error: "utterance produced no result" };
+    },
+
+    /**
+     * Does the microphone actually work inside an immersive session?
+     *
+     * M1 depends on this and nothing else does, so it is worth answering before
+     * building capture. Run it from chrome://inspect WHILE WEARING THE HEADSET
+     * with the session running — the answer on a desktop tab tells you nothing
+     * about the Quest browser's behaviour in-session.
+     *
+     * Permission alone is not the test. The failure mode that would actually
+     * bite is a granted mic that yields silence or zero bytes once the session
+     * takes audio focus, so this records a real sample and reports the byte
+     * count and peak amplitude.
+     */
+    async probeMic(ms = 1500) {
+      const report: Record<string, unknown> = { presenting: deps.presenting() };
+      if (!deps.presenting()) {
+        report.warning = "not in an XR session — this result says nothing about in-session behaviour";
+      }
+
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+        });
+      } catch (err) {
+        report.ok = false;
+        report.stage = "getUserMedia";
+        report.error = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+        return report;
+      }
+
+      try {
+        const track = stream.getAudioTracks()[0];
+        report.trackLabel = track?.label ?? "(none)";
+        report.trackState = track?.readyState ?? "(none)";
+        report.trackSettings = track?.getSettings?.() ?? {};
+
+        const candidates = [
+          "audio/webm;codecs=opus",
+          "audio/webm",
+          "audio/ogg;codecs=opus",
+          "audio/mp4",
+        ];
+        report.supportedMimeTypes = candidates.filter((m) =>
+          typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported?.(m),
+        );
+
+        const mimeType = (report.supportedMimeTypes as string[])[0];
+        if (!mimeType) {
+          report.ok = false;
+          report.stage = "MediaRecorder";
+          report.error = "no supported audio mime type";
+          return report;
+        }
+
+        // Peak amplitude via the Web Audio graph, so "recorded bytes but pure
+        // silence" is distinguishable from "recorded actual audio".
+        const ctx = new AudioContext();
+        const source = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 2048;
+        source.connect(analyser);
+        const samples = new Float32Array(analyser.fftSize);
+        let peak = 0;
+
+        const recorder = new MediaRecorder(stream, { mimeType });
+        const chunks: Blob[] = [];
+        recorder.ondataavailable = (e) => {
+          if (e.data.size > 0) chunks.push(e.data);
+        };
+
+        const stopped = new Promise<void>((resolve) => {
+          recorder.onstop = () => resolve();
+        });
+        recorder.start();
+
+        const started = performance.now();
+        while (performance.now() - started < ms) {
+          analyser.getFloatTimeDomainData(samples);
+          for (const s of samples) peak = Math.max(peak, Math.abs(s));
+          await new Promise((r) => setTimeout(r, 50));
+        }
+        recorder.stop();
+        await stopped;
+
+        const bytes = chunks.reduce((n, c) => n + c.size, 0);
+        report.audioContextState = ctx.state;
+        report.mimeType = mimeType;
+        report.recordedBytes = bytes;
+        report.peakAmplitude = Number(peak.toFixed(4));
+        report.ok = bytes > 0 && peak > 0.001;
+        if (bytes > 0 && peak <= 0.001) {
+          report.warning = "recorded bytes but the signal was silent — say something while probing";
+        }
+        void ctx.close();
+        return report;
+      } finally {
+        for (const t of stream.getTracks()) t.stop();
+      }
     },
 
     measure(token = "here", msAgo = 0) {

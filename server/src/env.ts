@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -48,6 +48,10 @@ export const env = {
   dataDir: process.env.DATA_DIR
     ? resolve(repoRoot, process.env.DATA_DIR)
     : resolve(serverRoot, "data"),
+  /** Offline STT model. Downloaded by `npm run stt:model`, never committed. */
+  voskModelPath: process.env.VOSK_MODEL_PATH
+    ? resolve(repoRoot, process.env.VOSK_MODEL_PATH)
+    : resolve(serverRoot, "models/vosk-model-small-en-us-0.15"),
 };
 
 /** The `mock` provider needs no key — it is a test double, see stt/mock.ts. */
@@ -55,9 +59,19 @@ export function isMockStt(): boolean {
   return env.sttProvider === "mock";
 }
 
+/** Vosk runs locally: no key, but useless without its model on disk. */
+export function isVoskStt(): boolean {
+  return env.sttProvider === "vosk";
+}
+
 export function capabilities(): { stt: boolean; claude: boolean; sttProvider: string } {
   return {
-    stt: isMockStt() || Boolean(env.sttProvider && env.sttKey),
+    stt:
+      isMockStt() ||
+      // Reported false until the model is downloaded, so the client says "not
+      // configured" instead of promising capture that would fail on first use.
+      (isVoskStt() && existsSync(env.voskModelPath)) ||
+      Boolean(env.sttProvider && env.sttKey),
     claude: Boolean(env.anthropicKey),
     // Named so the client can say "mock" rather than "ready" in its status line
     // — a mock reporting itself as working STT is how a demo lies to you.

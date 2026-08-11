@@ -310,6 +310,19 @@ round trip.
 **M1 — Voice loop.** Gesture-gated audio capture, upload, cloud STT, floating transcript,
 full state machine driving wisp behaviour, cancel, silence backstop.
 *Accept:* speak a sentence, see an accurate transcript within 1.5s, cancel mid-flight.
+*Status:* state machine, cancel, silence backstop, floating transcript and the **STT provider**
+are done; **gesture-gated audio capture is not**, so the loop is not closed.
+
+STT is **Vosk, local and offline** rather than cloud. Word-level timestamps (§6.3) are the
+filter that matters, not price: the Web Speech API has none *and* the Quest browser lacks it.
+Vosk emits `{word,start,end,conf}` natively, needs no key, and measured 0.09x realtime on a
+2-core i3 — a 3s utterance in ~0.3s, inside the 1.5s budget. Accuracy is the tradeoff; a
+larger model or a cloud provider drops in behind the same `STT_PROVIDER` switch.
+
+*Open gate before capture is built:* whether `getUserMedia` survives inside an active
+immersive session on the Quest browser. `window.vair.probeMic()` answers it on-device —
+it records a real sample and reports byte count and peak amplitude, because a granted mic
+that yields silence is the failure mode that would actually bite.
 
 **M2 — Temporal binding.** Pose ring buffer, word-level timestamps, measurement bundle,
 deixis resolution. Hardcoded object types only.

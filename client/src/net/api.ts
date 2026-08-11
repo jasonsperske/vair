@@ -58,11 +58,19 @@ export async function health(): Promise<Health> {
   return res.json() as Promise<Health>;
 }
 
-/** M1. Word-level timestamps are a hard requirement — see shared/protocol.ts. */
+/**
+ * M1. Word-level timestamps are a hard requirement — see shared/protocol.ts.
+ *
+ * Posted as a raw body rather than multipart: one file and no fields, so the
+ * server needs no multipart parser.
+ */
 export async function transcribe(audio: Blob, signal?: AbortSignal): Promise<TranscriptResponse> {
-  const body = new FormData();
-  body.append("audio", audio, "utterance.webm");
-  const res = await fetch(`${BASE}/stt`, { method: "POST", body, signal });
+  const res = await fetch(`${BASE}/stt`, {
+    method: "POST",
+    headers: { "content-type": audio.type || "audio/webm" },
+    body: audio,
+    signal,
+  });
   return parseJson(res, TranscriptResponse);
 }
 

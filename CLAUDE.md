@@ -44,6 +44,10 @@ the same job at the `/api/stt` boundary.
 Neither is a fallback. If a real provider turns out not to emit word-level timestamps, the answer
 is a different provider, not the mock (§6.3).
 
+Real STT is `STT_PROVIDER=vosk` — offline, no key, native word timings, `npm run stt:model` to
+fetch the model. Don't reach for the Web Speech API: it returns no word timings and the Quest
+browser doesn't implement it. `health.stt` deliberately reports false until the model is on disk.
+
 ## The model boundary
 
 The model returns **actions** (`shared/actions.ts`), never events — events carry id/seq/t/source
