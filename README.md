@@ -139,6 +139,27 @@ measured from audio. It proves the pose lookup, clock conversion and buffer wind
 nothing about a real provider's accuracy, and `health.stt` being true because of it must never be
 read as "STT works" — that is why health reports `sttProvider` separately and the UI says "mock".
 
+## The ground
+
+There is a floor at y=0 with eight styles — `void`, `grid` (the default), `grass`, `stone`,
+`sand`, `snow`, `wood`, `water`. Deixis was always raycasting that plane; this makes it visible,
+which is what stops placed objects reading as floating in nothing.
+
+Say **"make the floor grass"** and it changes in a frame. §13 requires the ground to be local and
+instant, never a round trip, so common phrasings are matched on-device and applied straight to the
+event log. Anything the matcher isn't confident about escalates silently to the model, per §9 —
+the user is never told there are two paths.
+
+The confidence bar is deliberately high, because §9 is explicit that a wrong local match produces
+a confident incorrect action while a missed one costs only a round trip. A match needs both a
+ground noun *and* exactly one recognised style, in a sentence short enough to be about nothing
+else. So "make the floor grass" is local, and "put a stone bench on the grass over there" is not a
+ground command at all and goes to the model — as does "the floor is lava", which comes back as
+stone with an honest note that there's no lava texture.
+
+This is the first thing to populate the `local` row in `npm run latency`, which is what makes the
+local-vs-server comparison in `tools/` mean anything.
+
 ## Saving and reloading
 
 Say **"save this"** and the scene is stored under a name the model invents from what is actually

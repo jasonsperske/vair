@@ -438,13 +438,16 @@ objects with no id collision.
 - Ground plane, sky, lighting and object *movement* are **local and instant**. Never a
   round trip. If picking up a named object takes 2s the illusion dies.
 
-  > **Currently unmet, both halves.** There is no ground plane, sky or lighting control at
-  > all: `environment_set` is handled in the client's scene view but nothing emits it, and
-  > deixis raycasts an *invisible* y=0 plane — pointing at the floor works while the user
-  > sees nothing there. And `move` / `scale` / `rotate` all route through the model at ~3s,
-  > which is exactly the 2s-to-pick-up failure this rule forbids. The movement half is what
-  > M4's affordance fast path is for; the ground plane is local, needs no model, and is
-  > independent of it.
+  > **Ground: met.** A faded disc at y=0 with eight styles, driven by
+  > `environment.groundMaterial` through the event log. Style changes take the §9 fast path
+  > — the common phrasings ("make the floor grass") are matched locally and applied in a
+  > frame with no round trip; anything the matcher isn't confident about escalates silently
+  > to `set_ground`. This is also the first population of the `local` row in the latency
+  > table, which finally makes the local-vs-server comparison in tools/ meaningful.
+  >
+  > **Sky and lighting: still unbuilt**, and `move` / `scale` / `rotate` still route through
+  > the model at ~3s, which is exactly the 2s-to-pick-up failure this rule forbids. That is
+  > what M4's affordance fast path is for; the ground proves the pattern works.
 - Under 5s from utterance to first visible change feels like magic; over 15s feels broken.
 - Browser heap will hit limits before native would. Implement asset eviction from M3, not
   later.

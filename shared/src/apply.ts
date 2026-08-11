@@ -162,6 +162,22 @@ export function applyActions(
       case "exit_session":
         break;
 
+      case "set_ground":
+        events.push({
+          type: "environment_set",
+          t: ctx.t,
+          source: "model",
+          utterance: ctx.utterance,
+          environment: {
+            groundMaterial: action.style,
+            // "void" is the absence of a floor rather than a material, so the
+            // two fields are kept consistent here instead of asking the model
+            // to remember to set both.
+            groundVisible: action.style !== "void",
+          },
+        });
+        break;
+
       case "remove_object": {
         const id = resolve(action.objectId);
         if (!id) {

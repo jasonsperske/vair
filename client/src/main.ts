@@ -12,6 +12,8 @@ import { ObjectRegistry } from "./scene/registry.js";
 import { SceneView } from "./scene/view.js";
 import { WispField } from "./vfx/wisps.js";
 import { HandModels } from "./vfx/hand-models.js";
+import { Ground } from "./vfx/ground.js";
+import { matchGroundCommand } from "./input/ground-command.js";
 import { DebugHud, type HudData } from "./debug/hud.js";
 import { earcons } from "./audio/earcons.js";
 import { AudioCapture } from "./audio/capture.js";
@@ -53,8 +55,9 @@ const wisps = new WispField();
 const hud = new DebugHud();
 const log = new EventLogStore();
 const registry = new ObjectRegistry(runtime.root);
+const ground = new Ground(runtime.root);
 // Projects the event log onto the scene graph. Nothing else adds meshes.
-new SceneView(registry, log);
+new SceneView(registry, log, ground);
 
 runtime.root.add(wisps.points);
 runtime.root.add(hud.mesh);
@@ -157,6 +160,55 @@ let toggle = false;
 const pressCount: Record<HandSide, number> = { left: 0, right: 0 };
 
 /**
+ * Route a resolved utterance: local fast path first, model otherwise.
+ *
+ * plan.md §9 — "always attempt local first; escalate silently on low
+ * confidence. The user must never learn there are two paths." Nothing here
+ * announces which path ran; the only visible difference is that the local one
+ * happens in a frame.
+ */
+function dispatchUtterance(u: ResolvedUtterance): void {
+  if (tryLocalGround(u)) return;
+
+  if (claudeAvailable) {
+    void sendTurn(u);
+  } else {
+    note = `${note} · no model configured`;
+    machine.done();
+    endTurnTiming();
+  }
+}
+
+/**
+ * The ground fast path (§13 — local and instant, never a round trip).
+ *
+ * Returns true when it handled the utterance. The confidence bar lives in
+ * matchGroundCommand and is set deliberately high: a missed match costs one
+ * round trip, a wrong one repaints the world under the user's feet.
+ */
+function tryLocalGround(u: ResolvedUtterance): boolean {
+  const style = matchGroundCommand(u.text);
+  if (!style) return false;
+
+  // Appended to the same log and the same undo stack as everything else (§9 —
+  // do not build two).
+  log.append({
+    type: "environment_set",
+    t: Date.now(),
+    source: "local",
+    utterance: u.text,
+    environment: { groundMaterial: style, groundVisible: style !== "void" },
+  });
+
+  turnLatency?.setPath("local");
+  turnLatency?.mark("scene_mutated");
+  note = style === "void" ? "floor removed" : `floor → ${style}`;
+  machine.done();
+  endTurnTiming();
+  return true;
+}
+
+/**
  * Open the microphone and start recording.
  *
  * Async, but the utterance anchor is taken from the moment the encoder actually
@@ -221,13 +273,7 @@ async function finishCapture(endXrTime: number): Promise<void> {
     lastResolved = resolved;
     note = summariseUtterance(resolved);
 
-    if (claudeAvailable) {
-      void sendTurn(resolved);
-    } else {
-      note = `${note} · no model configured`;
-      machine.done();
-      endTurnTiming();
-    }
+    dispatchUtterance(resolved);
   } catch (err) {
     if (controller.signal.aborted) return;
     note = err instanceof Error ? err.message : String(err);
@@ -260,16 +306,8 @@ function completeUtterance(armed: ArmedUtterance, endXrTime: number): ResolvedUt
   lastResolved = resolved;
   note = summariseUtterance(resolved);
 
-  if (claudeAvailable) {
-    // Stays in THINKING until the turn resolves. Deliberately not awaited: the
-    // frame loop must keep running while the request is in flight.
-    void sendTurn(resolved);
-  } else {
-    // Return to IDLE rather than pretending a turn happened — a fake THINKING
-    // state would make the latency numbers meaningless.
-    note = `${note} · no model configured`;
-    machine.done();
-  }
+  // Same routing as a real utterance: local fast path first, model otherwise.
+  dispatchUtterance(resolved);
   return resolved;
 }
 

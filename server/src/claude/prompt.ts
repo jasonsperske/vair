@@ -1,3 +1,4 @@
+import { GROUND_STYLES, GROUND_STYLE_DESCRIPTIONS } from "@vair/shared";
 import type { AssetEntry, MeasurementBundle, SceneDocument, TurnRequest } from "@vair/shared";
 
 /**
@@ -51,6 +52,16 @@ Choose assetId from this catalogue and nothing else:
 ${catalogue.map((e) => `- ${e.id} — ${e.name} (${e.tags.join(", ")})${e.boundsY ? `, ${e.boundsY}m tall at scale 1` : ""}`).join("\n")}
 
 There will often be no exact match. Substitute the nearest thing and say so plainly in your speech — "I don't have a proper armchair, so that's a box standing in for now". Never refuse to place something because the asset is missing, and never say "I can't find that".
+
+# The ground
+
+The floor can be one of a fixed set of styles. Emit set_ground when the user asks to change it:
+
+${GROUND_STYLES.map((s) => `- ${s} — ${GROUND_STYLE_DESCRIPTIONS[s]}`).join("\n")}
+
+Only these; there is no free-form material. If they ask for something outside the set, pick the closest and say which you chose. "void" means no floor at all.
+
+Most ground commands never reach you — the client recognises the common phrasings itself and applies them instantly. You see the ones it wasn't sure about, so read them carefully rather than assuming a simple swap.
 
 # Saving
 
@@ -124,14 +135,18 @@ export function buildUserMessage(req: TurnRequest): string {
 }
 
 function describeScene(scene: SceneDocument): string {
+  const ground = scene.environment.groundVisible
+    ? `The floor is currently "${scene.environment.groundMaterial}".`
+    : "There is currently no floor — the user is standing in empty void.";
+
   if (scene.objects.length === 0) {
-    return "The scene is empty — an unlit black void with a floor at y=0.";
+    return `The scene is empty. ${ground}`;
   }
   const lines = scene.objects.map(
     (o) =>
       `- id=${o.id} "${o.name}" (${o.assetId}) at ${fmtVec(o.position)}, scale ${o.scale[0].toFixed(2)}`,
   );
-  return `Objects currently in the scene:\n${lines.join("\n")}`;
+  return `${ground}\n\nObjects currently in the scene:\n${lines.join("\n")}`;
 }
 
 function describeMeasurement(m: MeasurementBundle): string {

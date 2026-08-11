@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GROUND_STYLES } from "./ground.js";
 
 /**
  * The model-facing action vocabulary — the one validated schema boundary for
@@ -94,6 +95,18 @@ export const ModelAction = z.discriminatedUnion("action", [
    */
   z.object({
     action: z.literal("exit_session"),
+  }),
+  /**
+   * "make the floor grass", "get rid of the ground".
+   *
+   * Reachable by the model as an escalation path, but most ground commands
+   * never get here: the client matches the common phrasings locally and applies
+   * them without a round trip, because §13 requires the ground to be instant.
+   * This exists for the phrasings the local matcher isn't confident about.
+   */
+  z.object({
+    action: z.literal("set_ground"),
+    style: z.enum(GROUND_STYLES),
   }),
 ]);
 export type ModelAction = z.infer<typeof ModelAction>;

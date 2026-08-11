@@ -1,4 +1,5 @@
 export * from "./math.js";
+export * from "./ground.js";
 export * from "./measurement.js";
 export * from "./affordance.js";
 export * from "./scene.js";

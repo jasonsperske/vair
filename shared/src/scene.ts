@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Quat, Vec3 } from "./math.js";
 import { Affordance } from "./affordance.js";
+import { GROUND_STYLES } from "./ground.js";
 
 /**
  * plan.md §8. JSON, not XML. Resolved absolutes only — never a gesture phrase.
@@ -30,9 +31,16 @@ export const SceneObject = z.object({
 export type SceneObject = z.infer<typeof SceneObject>;
 
 export const Environment = z.object({
-  /** plan.md §2 — fully immersive void. No passthrough, ever. */
-  groundVisible: z.boolean().default(false),
-  groundMaterial: z.string().default("void"),
+  /**
+   * plan.md §2 — fully immersive void. No passthrough, ever. A floor is part of
+   * the scene, not a window onto the room, so it does not conflict with that.
+   *
+   * On by default because §13 lists the ground plane among the things that must
+   * simply be there, and because objects resting on nothing read as floating —
+   * which is exactly the feedback that makes "put a cube here" hard to judge.
+   */
+  groundVisible: z.boolean().default(true),
+  groundMaterial: z.enum(GROUND_STYLES).default("grid"),
   /** 0..24, drives the ambient key shift in M5. */
   timeOfDay: z.number().min(0).max(24).default(12),
   ambientIntensity: z.number().default(0.15),
