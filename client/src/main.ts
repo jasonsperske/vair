@@ -303,6 +303,12 @@ async function sendTurn(u: ResolvedUtterance): Promise<void> {
     const response = await streamTurn(
       request,
       (action) => {
+        // Leaving touches no scene state, so it never reaches applyActions.
+        if (action.action === "exit_session") {
+          void exitSession();
+          return;
+        }
+
         // Committed the instant it arrives — this is the progressive part.
         // Re-folding the scene per action means a later action can reference an
         // object placed by an earlier one in the same turn.
@@ -390,16 +396,43 @@ function newSceneId(name: string): string {
   return slugify(name, 48);
 }
 
+/**
+ * The save in flight, if any. "save and exit" arrives as two actions applied
+ * back to back, so the exit has to wait for this or it would race the write
+ * and could drop the scene it just promised to keep.
+ */
+let pendingSave: Promise<void> | null = null;
+
 /** Write the whole event log to the server (§8 — the log is what persists). */
-async function persistScene(id: string, name: string): Promise<void> {
+function persistScene(id: string, name: string): Promise<void> {
+  pendingSave = (async () => {
+    try {
+      await saveScene(id, name, log.all());
+      savedScenes = await listScenes();
+      renderSceneList();
+    } catch (err) {
+      // The model has already said "saved" by now, so a silent failure would
+      // be a lie. Surface it where the user can see it.
+      note = `save failed: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  })();
+  return pendingSave;
+}
+
+/**
+ * End the session and return to the landing page.
+ *
+ * Waits on any save from the same turn first. The fetch itself would survive
+ * leaving the session — nothing cancels it — but the list on the landing page
+ * is rendered from the response, so exiting first would drop the user onto a
+ * library that does not yet show what they just saved.
+ */
+async function exitSession(): Promise<void> {
   try {
-    await saveScene(id, name, log.all());
-    savedScenes = await listScenes();
-    renderSceneList();
-  } catch (err) {
-    // The model has already said "saved" by now, so a silent failure would be
-    // a lie. Surface it where the user can see it.
-    note = `save failed: ${err instanceof Error ? err.message : String(err)}`;
+    await pendingSave;
+  } finally {
+    pendingSave = null;
+    runtime.exit();
   }
 }
 

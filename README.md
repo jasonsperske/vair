@@ -126,6 +126,13 @@ nobody thought of.
 
 Saved scenes appear on the landing page; clicking one replays it and enters VR.
 
+Say **"exit"** (or "I'm done", "get me out of here") to end the session and return to the landing
+page, or **"save and exit"** to do both. That needs no special case either: the model emits
+`save_scene` then `exit_session` and the existing in-order application handles it. The exit waits
+on any save from the same turn — the write would survive leaving the session, but the library is
+rendered from its response, so exiting first would drop you onto a list missing what you just
+saved. A plain "exit" does not save, and the model says so when the scene isn't empty.
+
 **What persists is the event log, not the folded document** (§8). The document is a fold and can
 always be recomputed; the log additionally carries the history — which is why a reloaded scene is
 identical rather than merely similar, and why editing continues cleanly on top of it. New object

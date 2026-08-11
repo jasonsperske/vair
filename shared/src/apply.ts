@@ -157,6 +157,11 @@ export function applyActions(
         break;
       }
 
+      // Produces no event: leaving changes nothing about the scene. The caller
+      // performs it as a side effect, the same way it performs the save.
+      case "exit_session":
+        break;
+
       case "remove_object": {
         const id = resolve(action.objectId);
         if (!id) {

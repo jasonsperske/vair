@@ -83,6 +83,18 @@ export const ModelAction = z.discriminatedUnion("action", [
     action: z.literal("save_scene"),
     name: z.string(),
   }),
+  /**
+   * "exit" / "I'm done". Ends the immersive session and returns to the landing
+   * page.
+   *
+   * "save and exit" needs no special case: the model emits save_scene followed
+   * by exit_session and the existing in-order application does the rest. It
+   * must be the last action in a turn — anything after it acts on a session
+   * that is already gone.
+   */
+  z.object({
+    action: z.literal("exit_session"),
+  }),
 ]);
 export type ModelAction = z.infer<typeof ModelAction>;
 
