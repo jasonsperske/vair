@@ -40,6 +40,20 @@ type SayOptions = { durationMs?: number; hand?: HandSide };
 
 const DEFAULT_UTTERANCE_MS = 1800;
 
+/**
+ * A promise that cannot hang. Used on every await in probeMic, because an
+ * unresolved promise is indistinguishable from "the tool did nothing" and is
+ * exactly the failure the probe exists to catch.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms),
+    ),
+  ]);
+}
+
 export function installDebugBridge(deps: BridgeDeps): void {
   const api = {
     help(): string[] {
@@ -120,23 +134,58 @@ export function installDebugBridge(deps: BridgeDeps): void {
      */
     async probeMic(ms = 1500) {
       const report: Record<string, unknown> = { presenting: deps.presenting() };
+      // Every stage logs, so a hang still shows how far it got in the console
+      // even though the promise never resolves to a value.
+      const stage = (name: string, extra?: unknown) => {
+        report.stage = name;
+        console.log(`[vair] probeMic: ${name}`, extra ?? "");
+      };
+
       if (!deps.presenting()) {
         report.warning = "not in an XR session — this result says nothing about in-session behaviour";
       }
 
+      // Read the permission WITHOUT prompting, so a blocked or prompt-pending
+      // state is visible even if the request below never returns.
+      stage("permissions.query");
+      try {
+        const status = await navigator.permissions?.query({
+          name: "microphone" as PermissionName,
+        });
+        report.permission = status?.state ?? "unknown";
+      } catch {
+        report.permission = "unqueryable";
+      }
+
       let stream: MediaStream;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
-        });
+        stage("getUserMedia");
+        // Bounded on purpose. A permission prompt that cannot be drawn inside
+        // an immersive session leaves this promise pending forever, which looks
+        // exactly like "nothing happened" — a timeout turns that silence into a
+        // diagnosis.
+        stream = await withTimeout(
+          navigator.mediaDevices.getUserMedia({
+            audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+          }),
+          8000,
+          "getUserMedia",
+        );
       } catch (err) {
         report.ok = false;
-        report.stage = "getUserMedia";
         report.error = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+        if (String(report.error).includes("timed out")) {
+          report.diagnosis =
+            report.permission === "prompt"
+              ? "permission was never granted and the prompt likely cannot render inside an immersive session — exit XR, run probeMic() on the flat page to grant it, then re-enter and probe again"
+              : "getUserMedia hung despite permission — the session may be holding audio focus";
+        }
+        console.warn("[vair] probeMic failed:", report);
         return report;
       }
 
       try {
+        stage("inspect track");
         const track = stream.getAudioTracks()[0];
         report.trackLabel = track?.label ?? "(none)";
         report.trackState = track?.readyState ?? "(none)";
@@ -170,6 +219,7 @@ export function installDebugBridge(deps: BridgeDeps): void {
         const samples = new Float32Array(analyser.fftSize);
         let peak = 0;
 
+        stage("recording", `${ms}ms as ${mimeType}`);
         const recorder = new MediaRecorder(stream, { mimeType });
         const chunks: Blob[] = [];
         recorder.ondataavailable = (e) => {
@@ -188,7 +238,10 @@ export function installDebugBridge(deps: BridgeDeps): void {
           await new Promise((r) => setTimeout(r, 50));
         }
         recorder.stop();
-        await stopped;
+        // Also bounded: a recorder that never fires onstop would hang here.
+        await withTimeout(stopped, 5000, "MediaRecorder.onstop").catch(() => {
+          report.warning = "recorder did not fire onstop within 5s";
+        });
 
         const bytes = chunks.reduce((n, c) => n + c.size, 0);
         report.audioContextState = ctx.state;
@@ -200,6 +253,8 @@ export function installDebugBridge(deps: BridgeDeps): void {
           report.warning = "recorded bytes but the signal was silent — say something while probing";
         }
         void ctx.close();
+        stage("done");
+        console.log("[vair] probeMic result:", report);
         return report;
       } finally {
         for (const t of stream.getTracks()) t.stop();
