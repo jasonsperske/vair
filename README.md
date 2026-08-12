@@ -141,8 +141,8 @@ read as "STT works" — that is why health reports `sttProvider` separately and 
 
 ## The ground
 
-There is a floor at y=0 with eight styles — `void`, `grid` (the default), `grass`, `stone`,
-`sand`, `snow`, `wood`, `water`. Deixis was always raycasting that plane; this makes it visible,
+There is a floor at y=0 with nine styles — `void`, `grid` (the default), `grass`, `stone`,
+`sand`, `snow`, `wood`, `water`, `carpet`. Deixis was always raycasting that plane; this makes it visible,
 which is what stops placed objects reading as floating in nothing.
 
 Say **"make the floor grass"** and it changes in a frame. §13 requires the ground to be local and
