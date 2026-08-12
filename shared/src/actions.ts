@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { GROUND_STYLES } from "./ground.js";
 import { LIGHT_COLORS, LIGHT_KINDS } from "./lights.js";
+import { SKY_STYLES } from "./sky.js";
+import { CEILING_STYLES } from "./ceiling.js";
 
 /**
  * The model-facing action vocabulary — the one validated schema boundary for
@@ -143,6 +145,20 @@ export const ModelAction = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("set_ambient"),
     intensity: z.number(),
+  }),
+  z.object({
+    action: z.literal("set_sky"),
+    style: z.enum(SKY_STYLES),
+  }),
+  /**
+   * A ceiling and its height together, because they are almost always chosen
+   * together — "put a low suspended ceiling in" is one decision, not two.
+   */
+  z.object({
+    action: z.literal("set_ceiling"),
+    style: z.enum(CEILING_STYLES),
+    /** Metres above the floor. Clamped client-side. */
+    height: z.number(),
   }),
 ]);
 export type ModelAction = z.infer<typeof ModelAction>;

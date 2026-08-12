@@ -160,6 +160,30 @@ stone with an honest note that there's no lava texture.
 This is the first thing to populate the `local` row in `npm run latency`, which is what makes the
 local-vs-server comparison in `tools/` mean anything.
 
+## Sky and ceiling
+
+`set_sky` gives the void a gradient dome — `day`, `dusk`, `night` (with procedural stars),
+`overcast`, `storm`, or `void` for §2's original black, which stays the default. It's two colours
+and a star toggle in a shader rather than a cube map, so styles change by swapping uniforms with
+no texture loading, no network and nothing to evict.
+
+`set_ceiling` closes the room in: `tiles`, `concrete`, `plaster`, `wood`, at a height between 1.8m
+and 12m. Faded at the rim like the ground, because a hard rectangular edge overhead reads as a
+floating slab.
+
+**Whole-place requests compose.** "Make this the backrooms" isn't a special case — the model sets
+carpet floor, tile ceiling at 2.4m, no sky, flat amber ambient and a buzzing amber lamp, all in one
+turn, because those together *are* the effect and any one alone misses it:
+
+```
+"make this the backrooms"              → carpet + tiles@2.4m + no sky + amber fill + lamp
+"put me under a starry night sky"      → grass + night + low ambient + moonlight sun
+"make the ceiling concrete"            → local, instant
+```
+
+Sky and ceiling are *surfaces*, not objects — no name, not movable, not deletable like a lamp.
+`void` removes one.
+
 ## Lights
 
 **A light is a scene object**, not a separate concept — `assetId: "light:point"` or

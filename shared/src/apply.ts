@@ -3,6 +3,7 @@ import type { SceneEvent } from "./events.js";
 import type { Quat, Vec3 } from "./math.js";
 import type { SceneDocument } from "./scene.js";
 import { LIGHT_INTENSITY, lightAssetId } from "./lights.js";
+import { MAX_CEILING_HEIGHT, MIN_CEILING_HEIGHT } from "./ceiling.js";
 
 /**
  * Turning model intent into event drafts (plan.md §8).
@@ -225,6 +226,32 @@ export function applyActions(
           source: "model",
           utterance: ctx.utterance,
           environment: { ambientIntensity: clampIntensity(action.intensity) },
+        });
+        break;
+
+      case "set_sky":
+        events.push({
+          type: "environment_set",
+          t: ctx.t,
+          source: "model",
+          utterance: ctx.utterance,
+          environment: { sky: action.style },
+        });
+        break;
+
+      case "set_ceiling":
+        events.push({
+          type: "environment_set",
+          t: ctx.t,
+          source: "model",
+          utterance: ctx.utterance,
+          environment: {
+            ceiling: action.style,
+            ceilingHeight: Math.min(
+              MAX_CEILING_HEIGHT,
+              Math.max(MIN_CEILING_HEIGHT, action.height),
+            ),
+          },
         });
         break;
 

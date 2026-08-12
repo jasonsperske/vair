@@ -4,6 +4,13 @@ import {
   LIGHT_COLORS,
   LIGHT_KINDS,
   LIGHT_KIND_DESCRIPTIONS,
+  SKY_STYLES,
+  SKY_STYLE_DESCRIPTIONS,
+  CEILING_STYLES,
+  CEILING_STYLE_DESCRIPTIONS,
+  DEFAULT_CEILING_HEIGHT,
+  MIN_CEILING_HEIGHT,
+  MAX_CEILING_HEIGHT,
 } from "@vair/shared";
 import type { AssetEntry, MeasurementBundle, SceneDocument, TurnRequest } from "@vair/shared";
 
@@ -68,6 +75,22 @@ ${GROUND_STYLES.map((s) => `- ${s} — ${GROUND_STYLE_DESCRIPTIONS[s]}`).join("\
 Only these; there is no free-form material. If they ask for something outside the set, pick the closest and say which you chose. "void" means no floor at all.
 
 Most ground commands never reach you — the client recognises the common phrasings itself and applies them instantly. You see the ones it wasn't sure about, so read them carefully rather than assuming a simple swap.
+
+# Sky and ceiling
+
+set_sky changes what is overhead in the open:
+
+${SKY_STYLES.map((s) => `- ${s} — ${SKY_STYLE_DESCRIPTIONS[s]}`).join("\n")}
+
+set_ceiling closes the room in, and takes a height in metres along with the style:
+
+${CEILING_STYLES.map((s) => `- ${s} — ${CEILING_STYLE_DESCRIPTIONS[s]}`).join("\n")}
+
+Height runs ${MIN_CEILING_HEIGHT}m to ${MAX_CEILING_HEIGHT}m. ${DEFAULT_CEILING_HEIGHT}m is an ordinary room; go lower for something oppressive, higher for a hall. A ceiling hides the sky, so setting one usually means the sky no longer matters.
+
+These are surfaces, not objects: they have no name and cannot be moved or deleted like a lamp. Use "void" to take one away.
+
+**Whole-place requests.** When someone asks for a *kind of place* rather than one surface — "make this the backrooms", "put me in a cave", "make it a sunny field" — set the surfaces together in one turn, and the lighting with them. The backrooms specifically is carpet floor, tiles ceiling at about 2.4m, no sky, and a flat sickly amber ambient with no shadows; that combination IS the effect, and any one of them alone misses it. Do not ask which surface they meant — decide, do it, and say what you built.
 
 # Lighting
 
@@ -155,9 +178,15 @@ export function buildUserMessage(req: TurnRequest): string {
 }
 
 function describeScene(scene: SceneDocument): string {
-  const ground = scene.environment.groundVisible
-    ? `The floor is currently "${scene.environment.groundMaterial}".`
-    : "There is currently no floor — the user is standing in empty void.";
+  const env = scene.environment;
+  const ground = [
+    env.groundVisible
+      ? `The floor is currently "${env.groundMaterial}".`
+      : "There is currently no floor — the user is standing in empty void.",
+    env.ceiling === "void"
+      ? `The sky is "${env.sky}" and there is no ceiling.`
+      : `There is a "${env.ceiling}" ceiling ${env.ceilingHeight}m up.`,
+  ].join(" ");
 
   if (scene.objects.length === 0) {
     return `The scene is empty. ${ground}`;

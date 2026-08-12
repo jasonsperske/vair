@@ -34,6 +34,9 @@ const STYLES: Record<GroundStyle, StyleSpec> = {
   snow: { color: 0x8f9bb3, gridColor: 0xa8b4c9, grid: 0.1 },
   wood: { color: 0x4a3524, gridColor: 0x5c432e, grid: 0.4 },
   water: { color: 0x14314f, gridColor: 0x1e4a72, grid: 0.2 },
+  // Mustard, low contrast, barely any pattern — backrooms carpet reads as an
+  // expanse of grubby colour rather than anything with structure.
+  carpet: { color: 0x6e5f2e, gridColor: 0x7d6d38, grid: 0.06 },
 };
 
 const RADIUS = 30;

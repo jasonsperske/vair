@@ -455,9 +455,14 @@ objects with no id collision.
   > `object_placed` already carried `parameters` and `parameter_set` already existed. Worth
   > noting as evidence the §8 event model is carrying its weight.
   >
-  > **Sky: still unbuilt**, and `move` / `scale` / `rotate` still route through the model at
-  > ~3s, which is exactly the 2s-to-pick-up failure this rule forbids. That is what M4's
-  > affordance fast path is for; ground and brightness prove the pattern works.
+  > **Sky: met**, plus a ceiling the plan never asked for — a gradient dome with procedural
+  > stars, and a suspended-tile ceiling at a settable height. All four surfaces (sky,
+  > ground, ceiling, ambient) take the same local fast path and are folded from one
+  > `environment_set`, so a partial change merges rather than wiping its neighbours.
+  >
+  > **Only `move` / `scale` / `rotate` remain**, still routing through the model at ~3s —
+  > exactly the 2s-to-pick-up failure this rule forbids. That is M4's affordance fast path,
+  > and four working local paths are now a template for it.
 - Under 5s from utterance to first visible change feels like magic; over 15s feels broken.
 - Browser heap will hit limits before native would. Implement asset eviction from M3, not
   later.

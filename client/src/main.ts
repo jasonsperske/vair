@@ -1,5 +1,10 @@
 import { Euler, Quaternion, Vector3 } from "three";
-import { applyActions, synthesizeTranscript, LIGHT_INTENSITY } from "@vair/shared";
+import {
+  applyActions,
+  synthesizeTranscript,
+  LIGHT_INTENSITY,
+  type Environment,
+} from "@vair/shared";
 import { clock } from "./core/clock.js";
 import { poseBuffer } from "./core/pose-buffer.js";
 import { createRuntime, isSupported } from "./core/xr.js";
@@ -13,7 +18,12 @@ import { SceneView } from "./scene/view.js";
 import { WispField } from "./vfx/wisps.js";
 import { HandModels } from "./vfx/hand-models.js";
 import { SceneEnvironment } from "./vfx/environment.js";
-import { matchBrightnessCommand, matchGroundCommand } from "./input/ground-command.js";
+import {
+  matchBrightnessCommand,
+  matchCeilingCommand,
+  matchGroundCommand,
+  matchSkyCommand,
+} from "./input/local-commands.js";
 import { DebugHud, type HudData } from "./debug/hud.js";
 import { earcons } from "./audio/earcons.js";
 import { AudioCapture } from "./audio/capture.js";
@@ -166,6 +176,8 @@ const pressCount: Record<HandSide, number> = { left: 0, right: 0 };
  */
 function dispatchUtterance(u: ResolvedUtterance): void {
   if (tryLocalGround(u)) return;
+  if (tryLocalSky(u)) return;
+  if (tryLocalCeiling(u)) return;
   if (tryLocalBrightness(u)) return;
 
   if (claudeAvailable) {
@@ -190,20 +202,56 @@ function tryLocalGround(u: ResolvedUtterance): boolean {
 
   // Appended to the same log and the same undo stack as everything else (§9 —
   // do not build two).
+  commitEnvironment(
+    { groundMaterial: style, groundVisible: style !== "void" },
+    style === "void" ? "floor removed" : `floor → ${style}`,
+    u.text,
+  );
+  return true;
+}
+
+/** Sky, same fast path and same confidence bar as the ground. */
+function tryLocalSky(u: ResolvedUtterance): boolean {
+  const style = matchSkyCommand(u.text);
+  if (!style) return false;
+  commitEnvironment({ sky: style }, style === "void" ? "sky removed" : `sky → ${style}`, u.text);
+  return true;
+}
+
+/**
+ * Ceiling. Style only — height is left to the model, because "a bit lower"
+ * needs the current height and a sense of what the room is for.
+ */
+function tryLocalCeiling(u: ResolvedUtterance): boolean {
+  const style = matchCeilingCommand(u.text);
+  if (!style) return false;
+  commitEnvironment(
+    { ceiling: style },
+    style === "void" ? "ceiling removed" : `ceiling → ${style}`,
+    u.text,
+  );
+  return true;
+}
+
+/** Append an environment change locally and close the turn. */
+function commitEnvironment(
+  change: Partial<Environment>,
+  summary: string,
+  utterance: string,
+): void {
   log.append({
     type: "environment_set",
     t: Date.now(),
     source: "local",
-    utterance: u.text,
-    environment: { groundMaterial: style, groundVisible: style !== "void" },
+    utterance,
+    environment: change,
   });
 
   turnLatency?.setPath("local");
   turnLatency?.mark("scene_mutated");
-  note = style === "void" ? "floor removed" : `floor → ${style}`;
+  note = summary;
   machine.done();
   endTurnTiming();
-  return true;
 }
 
 /**
@@ -225,19 +273,7 @@ function tryLocalBrightness(u: ResolvedUtterance): boolean {
     return true;
   }
 
-  log.append({
-    type: "environment_set",
-    t: Date.now(),
-    source: "local",
-    utterance: u.text,
-    environment: { ambientIntensity: next },
-  });
-
-  turnLatency?.setPath("local");
-  turnLatency?.mark("scene_mutated");
-  note = `brightness → ${next.toFixed(1)}`;
-  machine.done();
-  endTurnTiming();
+  commitEnvironment({ ambientIntensity: next }, `brightness → ${next.toFixed(1)}`, u.text);
   return true;
 }
 

@@ -2,6 +2,8 @@ import { HemisphereLight, type Object3D } from "three";
 import type { Environment as EnvironmentState } from "@vair/shared";
 import { ambientUnits } from "../scene/lights.js";
 import { Ground } from "./ground.js";
+import { Sky } from "./sky.js";
+import { Ceiling } from "./ceiling.js";
 
 /**
  * Everything the scene document's `environment` block controls: the ground and
@@ -14,10 +16,14 @@ import { Ground } from "./ground.js";
  */
 export class SceneEnvironment {
   private readonly ground: Ground;
+  private readonly sky: Sky;
+  private readonly ceiling: Ceiling;
   private readonly ambient: HemisphereLight;
 
   constructor(parent: Object3D) {
+    this.sky = new Sky(parent);
     this.ground = new Ground(parent);
+    this.ceiling = new Ceiling(parent);
     // Sky/ground tinted rather than flat white: in a void, a flat fill makes
     // every object look pasted on, while a slight vertical gradient gives
     // shapes enough form to read. The void stays a void — no environment map,
@@ -27,8 +33,10 @@ export class SceneEnvironment {
   }
 
   apply(state: EnvironmentState): void {
+    this.sky.setStyle(state.sky);
     this.ground.setStyle(state.groundMaterial);
     this.ground.setVisible(state.groundVisible);
+    this.ceiling.setStyle(state.ceiling, state.ceilingHeight);
     this.ambient.intensity = ambientUnits(state.ambientIntensity);
   }
 }

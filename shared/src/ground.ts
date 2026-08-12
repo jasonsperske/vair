@@ -18,6 +18,7 @@ export const GROUND_STYLES = [
   "snow",
   "wood",
   "water",
+  "carpet",
 ] as const;
 
 export type GroundStyle = (typeof GROUND_STYLES)[number];
@@ -32,6 +33,7 @@ export const GROUND_STYLE_DESCRIPTIONS: Record<GroundStyle, string> = {
   snow: "cold blue-white snow",
   wood: "dark timber planks",
   water: "deep blue water",
+  carpet: "worn mustard-yellow office carpet — the backrooms floor",
 };
 
 export function isGroundStyle(value: string): value is GroundStyle {

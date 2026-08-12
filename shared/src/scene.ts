@@ -2,6 +2,8 @@ import { z } from "zod";
 import { Quat, Vec3 } from "./math.js";
 import { Affordance } from "./affordance.js";
 import { GROUND_STYLES } from "./ground.js";
+import { SKY_STYLES } from "./sky.js";
+import { CEILING_STYLES, DEFAULT_CEILING_HEIGHT } from "./ceiling.js";
 
 /**
  * plan.md §8. JSON, not XML. Resolved absolutes only — never a gesture phrase.
@@ -41,6 +43,11 @@ export const Environment = z.object({
    */
   groundVisible: z.boolean().default(true),
   groundMaterial: z.enum(GROUND_STYLES).default("grid"),
+  /** §2's black void is the default; a sky is opt-in. */
+  sky: z.enum(SKY_STYLES).default("void"),
+  /** A ceiling is what turns the void into a room. Off unless asked for. */
+  ceiling: z.enum(CEILING_STYLES).default("void"),
+  ceilingHeight: z.number().default(DEFAULT_CEILING_HEIGHT),
   /** 0..24, drives the ambient key shift in M5. */
   timeOfDay: z.number().min(0).max(24).default(12),
   /** 0..10 in the model's units; the client maps it to renderer units. */

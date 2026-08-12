@@ -1,4 +1,4 @@
-import type { GroundStyle } from "@vair/shared";
+import type { CeilingStyle, GroundStyle, SkyStyle } from "@vair/shared";
 
 /**
  * Local recognition of ground commands (plan.md §9 and §13).
@@ -16,7 +16,7 @@ import type { GroundStyle } from "@vair/shared";
  * words and a lot besides, so it escalates and the model gets it right.
  */
 
-const GROUND_NOUNS = /\b(floor|ground|terrain)\b/;
+const GROUND_NOUNS = /\b(floor|ground|terrain|carpet)\b/;
 
 /** Style keywords and their synonyms. First match wins. */
 const STYLE_WORDS: [GroundStyle, RegExp][] = [
@@ -28,6 +28,7 @@ const STYLE_WORDS: [GroundStyle, RegExp][] = [
   ["snow", /\b(snow|snowy|ice|icy|frost)\b/],
   ["wood", /\b(wood|wooden|timber|planks|floorboards|parquet)\b/],
   ["water", /\b(water|sea|ocean|lake|river)\b/],
+  ["carpet", /\b(carpet|carpeted|backrooms)\b/],
 ];
 
 /**
@@ -77,4 +78,45 @@ export function matchGroundCommand(text: string): GroundStyle | null {
   if (matched.length !== 1) return null;
 
   return matched[0]![0];
+}
+
+const SKY_NOUNS = /\b(sky|skybox|heavens|above us|overhead)\b/;
+
+const SKY_WORDS: [SkyStyle, RegExp][] = [
+  ["void", /\b(void|nothing|none|no sky|remove|hide|black)\b/],
+  ["day", /\b(day|daytime|blue|clear|sunny|noon)\b/],
+  ["dusk", /\b(dusk|sunset|sundown|evening|golden hour|twilight)\b/],
+  ["night", /\b(night|nighttime|stars|starry|midnight)\b/],
+  ["overcast", /\b(overcast|cloudy|clouds|grey|gray|dull)\b/],
+  ["storm", /\b(storm|stormy|thunder|bruised|ominous)\b/],
+];
+
+const CEILING_NOUNS = /\b(ceiling|roof)\b/;
+
+const CEILING_WORDS: [CeilingStyle, RegExp][] = [
+  ["void", /\b(void|nothing|none|no ceiling|no roof|remove|hide|open)\b/],
+  ["tiles", /\b(tiles|tiled|suspended|drop|office|backrooms|polystyrene)\b/],
+  ["concrete", /\b(concrete|slab|brutalist|bunker)\b/],
+  ["plaster", /\b(plaster|white|smooth|painted)\b/],
+  ["wood", /\b(wood|wooden|timber|beams|boards)\b/],
+];
+
+/** Same shape and same confidence bar as the ground matcher. */
+function matchSurface<T>(text: string, nouns: RegExp, words: [T, RegExp][]): T | null {
+  const normalised = text.toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  if (!normalised) return null;
+  if (normalised.split(" ").length > MAX_WORDS) return null;
+  if (!nouns.test(normalised)) return null;
+
+  const matched = words.filter(([, pattern]) => pattern.test(normalised));
+  if (matched.length !== 1) return null;
+  return matched[0]![0];
+}
+
+export function matchSkyCommand(text: string): SkyStyle | null {
+  return matchSurface(text, SKY_NOUNS, SKY_WORDS);
+}
+
+export function matchCeilingCommand(text: string): CeilingStyle | null {
+  return matchSurface(text, CEILING_NOUNS, CEILING_WORDS);
 }
