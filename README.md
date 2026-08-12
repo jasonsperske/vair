@@ -184,6 +184,27 @@ turn, because those together *are* the effect and any one alone misses it:
 Sky and ceiling are *surfaces*, not objects — no name, not movable, not deletable like a lamp.
 `void` removes one.
 
+## Walls and doors
+
+Walls are described by their two **endpoints**, not a centre and a length — because "put a wall
+from here to there" produces two deictic tokens, so §6 hands the model two measurement bundles and
+it drops one on each end. A centre-and-length wall would make the most natural phrasing the
+hardest to satisfy. Verified: pointing at two spots produced a wall spanning exactly those points.
+
+**Doors cut a real opening.** The wall is rebuilt as segments around the hole — left of it, right
+of it, and a lintel above — rather than laying a door-shaped panel over a solid wall. Boolean
+geometry is the textbook answer and far too heavy for a Quest; three boxes look identical from
+every angle that matters. A 4m wall with a 0.9m door becomes 1.55m + lintel + 1.55m.
+
+```
+"put a brick wall from here to there"      → wall spanning both pointed-at spots
+"build me a room with a door in the front" → four walls, a door, a ceiling, a lamp
+"open the door"                            → the leaf swings on its hinge
+```
+
+A door belongs to a wall and stores only that relationship, never a copy of the wall's position —
+so a moved wall can't leave its door behind. Removing a door rebuilds the wall and closes the hole.
+
 ## Lights
 
 **A light is a scene object**, not a separate concept — `assetId: "light:point"` or

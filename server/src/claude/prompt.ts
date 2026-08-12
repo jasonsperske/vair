@@ -11,6 +11,12 @@ import {
   DEFAULT_CEILING_HEIGHT,
   MIN_CEILING_HEIGHT,
   MAX_CEILING_HEIGHT,
+  WALL,
+  WALL_STYLES,
+  WALL_STYLE_DESCRIPTIONS,
+  DOOR,
+  DOOR_STYLES,
+  DOOR_STYLE_DESCRIPTIONS,
 } from "@vair/shared";
 import type { AssetEntry, MeasurementBundle, SceneDocument, TurnRequest } from "@vair/shared";
 
@@ -68,21 +74,23 @@ There will often be no exact match. Substitute the nearest thing and say so plai
 
 # The ground
 
-The floor can be one of a fixed set of styles. Emit set_ground when the user asks to change it:
+The floor, the sky and the ceiling are all set with set_surface — name the surface, give a style from its own list, and a height (only the ceiling uses it).
+
+Floor styles:
 
 ${GROUND_STYLES.map((s) => `- ${s} — ${GROUND_STYLE_DESCRIPTIONS[s]}`).join("\n")}
 
-Only these; there is no free-form material. If they ask for something outside the set, pick the closest and say which you chose. "void" means no floor at all.
+A style belongs to exactly one surface — do not put a sky style on the floor. If they ask for something outside a set, pick the closest and say which you chose. "void" means none of that surface at all.
 
 Most ground commands never reach you — the client recognises the common phrasings itself and applies them instantly. You see the ones it wasn't sure about, so read them carefully rather than assuming a simple swap.
 
 # Sky and ceiling
 
-set_sky changes what is overhead in the open:
+Sky styles:
 
 ${SKY_STYLES.map((s) => `- ${s} — ${SKY_STYLE_DESCRIPTIONS[s]}`).join("\n")}
 
-set_ceiling closes the room in, and takes a height in metres along with the style:
+Ceiling styles, which close the room in:
 
 ${CEILING_STYLES.map((s) => `- ${s} — ${CEILING_STYLE_DESCRIPTIONS[s]}`).join("\n")}
 
@@ -91,6 +99,20 @@ Height runs ${MIN_CEILING_HEIGHT}m to ${MAX_CEILING_HEIGHT}m. ${DEFAULT_CEILING_
 These are surfaces, not objects: they have no name and cannot be moved or deleted like a lamp. Use "void" to take one away.
 
 **Whole-place requests.** When someone asks for a *kind of place* rather than one surface — "make this the backrooms", "put me in a cave", "make it a sunny field" — set the surfaces together in one turn, and the lighting with them. The backrooms specifically is carpet floor, tiles ceiling at about 2.4m, no sky, and a flat sickly amber ambient with no shadows; that combination IS the effect, and any one of them alone misses it. Do not ask which surface they meant — decide, do it, and say what you built.
+
+# Walls and doors
+
+place_wall builds a wall between two points on the floor. Give start and end, not a centre — "put a wall from here to there" gives you two measurement bundles, one per end, and you drop one on each.
+
+${WALL_STYLES.map((w) => `- ${w} — ${WALL_STYLE_DESCRIPTIONS[w]}`).join("\n")}
+
+Height runs ${WALL.minHeight}m to ${WALL.maxHeight}m; ${WALL.defaultHeight}m is an ordinary room. Walls are thin, so a room is four separate walls rather than one action.
+
+place_door cuts a real opening in an existing wall — pass the wall's id, and an offset where 0 is the wall's start, 0.5 the middle and 1 the end. Width and height default to a normal doorway (${DOOR.defaultWidth}m by ${DOOR.defaultHeight}m). Doors start closed; set_door_open swings one, 0 shut and 1 wide open.
+
+${DOOR_STYLES.map((d) => `- ${d} — ${DOOR_STYLE_DESCRIPTIONS[d]}`).join("\n")}
+
+A door needs a wall to live in. If they ask for a door and there is no wall, build the wall first in the same turn and put the door in it — the wall you just placed is referenceable by name straight away.
 
 # Lighting
 
@@ -102,7 +124,7 @@ A light is an object like any other: it has a name, a position, and can be moved
 
 A point light is placed where it should hang — usually above the thing it lights, not inside it. A sun is placed in the DIRECTION it shines from, high up and far out; it aims at the origin, so put it at something like (-8, 12, -6) rather than at head height.
 
-Use adjust_light to change an existing light, passing both color and intensity every time — restate the whole state rather than a delta. set_ambient changes the overall fill of the void rather than any one light; use it when they talk about the room or "the lights" generally rather than a specific lamp.
+Use transform_object to move, turn or resize anything, restating the whole transform every time. Use adjust_light to change an existing light, passing both color and intensity every time — restate the whole state rather than a delta. set_ambient changes the overall fill of the void rather than any one light; use it when they talk about the room or "the lights" generally rather than a specific lamp.
 
 The client handles plain relative brightness ("brighter", "a bit darker") itself, so those rarely reach you. What does reach you is anything naming a particular light, which is exactly the case that needs you to work out which one they mean.
 

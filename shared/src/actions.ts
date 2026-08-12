@@ -1,8 +1,7 @@
 import { z } from "zod";
-import { GROUND_STYLES } from "./ground.js";
 import { LIGHT_COLORS, LIGHT_KINDS } from "./lights.js";
-import { SKY_STYLES } from "./sky.js";
-import { CEILING_STYLES } from "./ceiling.js";
+import { SURFACE_STYLES } from "./surfaces.js";
+import { DOOR_STYLES, WALL_STYLES } from "./structures.js";
 
 /**
  * The model-facing action vocabulary — the one validated schema boundary for
@@ -51,19 +50,17 @@ export const ModelAction = z.discriminatedUnion("action", [
     /** Uniform multiplier on the asset's natural size. 1 = as authored. */
     scale: z.number(),
   }),
+  /**
+   * Move, turn and resize in one action, always restating the whole transform
+   * rather than sending a delta — the same "state, not diff" rule adjust_light
+   * follows. The expander compares against the scene and emits events only for
+   * the parts that actually changed, so undo stays meaningful.
+   */
   z.object({
-    action: z.literal("move_object"),
+    action: z.literal("transform_object"),
     objectId: z.string(),
     position: Vec3Object,
-  }),
-  z.object({
-    action: z.literal("rotate_object"),
-    objectId: z.string(),
     yawDegrees: z.number(),
-  }),
-  z.object({
-    action: z.literal("scale_object"),
-    objectId: z.string(),
     scale: z.number(),
   }),
   z.object({
@@ -100,18 +97,6 @@ export const ModelAction = z.discriminatedUnion("action", [
     action: z.literal("exit_session"),
   }),
   /**
-   * "make the floor grass", "get rid of the ground".
-   *
-   * Reachable by the model as an escalation path, but most ground commands
-   * never get here: the client matches the common phrasings locally and applies
-   * them without a round trip, because §13 requires the ground to be instant.
-   * This exists for the phrasings the local matcher isn't confident about.
-   */
-  z.object({
-    action: z.literal("set_ground"),
-    style: z.enum(GROUND_STYLES),
-  }),
-  /**
    * "put a warm light above the table", "add a sun".
    *
    * Expands to an ordinary object_placed event — a light is a scene object, so
@@ -142,23 +127,66 @@ export const ModelAction = z.discriminatedUnion("action", [
    * Overall brightness of the void itself, 0 to 10. Distinct from a placed
    * light: this is the ambient fill that keeps unlit faces from going black.
    */
+  /**
+   * The floor, the sky and the ceiling are one action rather than three: they
+   * are the same shape, and three near-identical variants cost real space in
+   * the compiled output grammar — enough that adding walls tipped the request
+   * over the API's limit.
+   *
+   * `style` is the combined vocabulary; the expander checks it against the
+   * surface named and drops the action if they do not match, rather than
+   * failing the whole turn.
+   */
+  z.object({
+    action: z.literal("set_surface"),
+    surface: z.enum(["ground", "sky", "ceiling"]),
+    style: z.enum(SURFACE_STYLES),
+    /** Metres. Only meaningful for the ceiling; ignored otherwise. */
+    height: z.number(),
+  }),
   z.object({
     action: z.literal("set_ambient"),
     intensity: z.number(),
   }),
-  z.object({
-    action: z.literal("set_sky"),
-    style: z.enum(SKY_STYLES),
-  }),
   /**
-   * A ceiling and its height together, because they are almost always chosen
-   * together — "put a low suspended ceiling in" is one decision, not two.
+   * "put a wall from here to there", "wall off that side".
+   *
+   * Endpoints, not centre-and-length: the natural phrasing produces two deictic
+   * tokens and therefore two measurement bundles, one per end.
    */
   z.object({
-    action: z.literal("set_ceiling"),
-    style: z.enum(CEILING_STYLES),
-    /** Metres above the floor. Clamped client-side. */
+    action: z.literal("place_wall"),
+    name: z.string(),
+    start: Vec3Object,
+    end: Vec3Object,
+    /** Metres from the floor. */
     height: z.number(),
+    style: z.enum(WALL_STYLES),
+  }),
+  /**
+   * "put a door in that wall".
+   *
+   * A door belongs to a wall and cuts a real opening in it — the wall is
+   * rebuilt as segments around the hole rather than having a panel laid over
+   * it. `offset` is a fraction along the wall so "in the middle" is 0.5 and the
+   * model never has to work in metres from an end it cannot see.
+   */
+  z.object({
+    action: z.literal("place_door"),
+    name: z.string(),
+    /** id of the wall this door is cut into. */
+    wallId: z.string(),
+    /** 0 at the wall's start, 1 at its end. */
+    offset: z.number(),
+    width: z.number(),
+    height: z.number(),
+    style: z.enum(DOOR_STYLES),
+  }),
+  /** "open the door", "shut it" — 0 is closed, 1 is fully open. */
+  z.object({
+    action: z.literal("set_door_open"),
+    objectId: z.string(),
+    open: z.number(),
   }),
 ]);
 export type ModelAction = z.infer<typeof ModelAction>;

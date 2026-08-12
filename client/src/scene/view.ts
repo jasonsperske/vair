@@ -1,7 +1,13 @@
 import type { SceneEvent, SceneObject } from "@vair/shared";
-import { foldScene, isLightAsset } from "@vair/shared";
+import { foldScene, isDoorAsset, isLightAsset, isWallAsset } from "@vair/shared";
 import { primitiveFor, type ObjectRegistry } from "./registry.js";
 import { applyLightParameter, createLight, type LightParameters } from "./lights.js";
+import {
+  applyDoorParameter,
+  createDoor,
+  createWall,
+  doorDimsOf,
+} from "./structures.js";
 import type { SceneEnvironment } from "../vfx/environment.js";
 import type { EventLogStore } from "./event-log.js";
 
@@ -47,7 +53,9 @@ export class SceneView {
           utterance: e.utterance,
           createdAt: e.t,
         };
-        this.registry.add(object, nodeFor(object));
+        this.registry.add(object, this.nodeFor(object));
+        // A new door cuts an opening, so its wall must be rebuilt around it.
+        if (isDoorAsset(object.assetId)) this.rebuildWall(doorDimsOf(object).wallId);
         break;
       }
 
@@ -69,9 +77,14 @@ export class SceneView {
         break;
       }
 
-      case "object_removed":
+      case "object_removed": {
+        // Note the wall before the door is gone, so the opening can close up.
+        const doomed = this.objectById(e.objectId);
+        const wallId = doomed && isDoorAsset(doomed.assetId) ? doorDimsOf(doomed).wallId : null;
         this.registry.remove(e.objectId);
+        if (wallId) this.rebuildWall(wallId);
         break;
+      }
 
       case "undone":
         // Undo is an event, so the cheapest correct response is to re-fold and
@@ -87,7 +100,11 @@ export class SceneView {
 
       case "parameter_set": {
         const node = this.registry.get(e.objectId);
-        if (node) applyLightParameter(node, e.parameter, e.value);
+        if (!node) break;
+        if (applyLightParameter(node, e.parameter, e.value)) break;
+        if (applyDoorParameter(node, e.parameter, e.value)) break;
+        // Anything else changes geometry rather than a uniform, so rebuild.
+        this.refresh(e.objectId);
         break;
       }
 
@@ -99,27 +116,58 @@ export class SceneView {
     }
   }
 
+  private objectById(id: string): SceneObject | undefined {
+    return this.log.scene().objects.find((o) => o.id === id);
+  }
+
+  /**
+   * A placed object becomes a light, a wall, a door or a mesh, decided by its
+   * asset id.
+   *
+   * Primitives only for props so far. M3 proper swaps that for a GLTFLoader
+   * keyed on assetId, with the primitive kept as the §14 fallback.
+   */
+  private nodeFor(object: SceneObject) {
+    if (isLightAsset(object.assetId)) {
+      return createLight(object.assetId, {
+        color: (object.parameters.color as LightParameters["color"]) ?? "neutral",
+        intensity:
+          typeof object.parameters.intensity === "number" ? object.parameters.intensity : 5,
+      });
+    }
+    if (isWallAsset(object.assetId)) {
+      return createWall(object, this.doorsFor(object.id));
+    }
+    if (isDoorAsset(object.assetId)) {
+      return createDoor(object, this.objectById(doorDimsOf(object).wallId));
+    }
+    return primitiveFor(object.assetId);
+  }
+
+  private doorsFor(wallId: string): SceneObject[] {
+    return this.log
+      .scene()
+      .objects.filter((o) => isDoorAsset(o.assetId) && doorDimsOf(o).wallId === wallId);
+  }
+
+  /** Drop and rebuild one object's node, for changes geometry depends on. */
+  private refresh(id: string): void {
+    const object = this.objectById(id);
+    if (!object) return;
+    this.registry.remove(id);
+    this.registry.add(object, this.nodeFor(object));
+  }
+
+  private rebuildWall(wallId: string): void {
+    if (wallId) this.refresh(wallId);
+  }
+
   private rebuild(): void {
     this.registry.clear();
     for (const object of foldScene(this.log.all(), Date.now()).objects) {
-      this.registry.add(object, nodeFor(object));
+      this.registry.add(object, this.nodeFor(object));
     }
     this.syncEnvironment();
   }
 }
 
-/**
- * A placed object becomes either a light or a mesh, decided by its asset id.
- *
- * Primitives only for props so far. M3 proper swaps that for a GLTFLoader keyed
- * on assetId, with the primitive kept as the §14 fallback.
- */
-function nodeFor(object: SceneObject) {
-  if (isLightAsset(object.assetId)) {
-    return createLight(object.assetId, {
-      color: (object.parameters.color as LightParameters["color"]) ?? "neutral",
-      intensity: typeof object.parameters.intensity === "number" ? object.parameters.intensity : 5,
-    });
-  }
-  return primitiveFor(object.assetId);
-}

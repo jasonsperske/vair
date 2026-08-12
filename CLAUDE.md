@@ -84,6 +84,20 @@ Thinking is off on this turn for **variance**, not mean — adaptive measured 9.
 identical warm requests. If you turn it back on, expect the latency to become uneven, which §9
 says is worse than uniformly slower.
 
+## The output grammar has a size limit
+
+Structured outputs compile to a grammar, and it **can be too large** — adding walls and doors
+tipped it over and every request 400'd with "the compiled grammar is too large". Two things fixed
+it, both worth knowing before adding another action:
+
+- Shared subschemas must be **named** in `definitions` so refs resolve under `$defs`. Inlining
+  them (or letting the default strategy point refs into `properties`) is rejected.
+- Prefer **fewer, fuller actions** over many near-identical ones. `transform_object` replaced
+  move/rotate/scale and `set_surface` replaced ground/sky/ceiling; both restate whole state, which
+  is the house style anyway.
+
+Before adding an action, ask whether it can be a variant of one that exists.
+
 ## Commands
 
 ```bash

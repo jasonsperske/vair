@@ -1,4 +1,4 @@
-import { TurnResponse } from "@vair/shared";
+import { TurnResponse, Vec3Object } from "@vair/shared";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
 /**
@@ -20,7 +20,16 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 export function turnResponseJsonSchema(): Record<string, unknown> {
   const schema = zodToJsonSchema(TurnResponse, {
     target: "jsonSchema7",
-    $refStrategy: "none", // structured outputs do not support $ref indirection
+    // Shared subschemas are referenced, not inlined. Vec3Object alone appears
+    // in six actions, and inlining it made the compiled grammar large enough
+    // that the API rejected the request outright once walls and doors were
+    // added: "the compiled grammar is too large".
+    //
+    // Naming it here is what makes the reference legal — refs must resolve
+    // under `$defs`, and the default strategy points them at the first
+    // occurrence's path inside `properties`, which the API rejects.
+    definitions: { Vec3Object },
+    definitionPath: "$defs",
   }) as Record<string, unknown>;
 
   delete schema.$schema;

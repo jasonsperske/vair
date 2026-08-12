@@ -4,6 +4,8 @@ import type { Quat, Vec3 } from "./math.js";
 import type { SceneDocument } from "./scene.js";
 import { LIGHT_INTENSITY, lightAssetId } from "./lights.js";
 import { MAX_CEILING_HEIGHT, MIN_CEILING_HEIGHT } from "./ceiling.js";
+import { stylesFor } from "./surfaces.js";
+import { DOOR, DOOR_ASSET, WALL, WALL_ASSET, clamp, isWallAsset } from "./structures.js";
 
 /**
  * Turning model intent into event drafts (plan.md §8).
@@ -54,6 +56,14 @@ export function applyActions(
   const resolve = (ref: string): string | null =>
     byId.has(ref) ? ref : (byName.get(normalise(ref)) ?? null);
 
+  /**
+   * Walls created earlier in THIS turn, which are not in `scene` yet — it is
+   * the fold of events up to the start of the turn. "Build a room with a door
+   * in the front wall" places the wall and the door in one turn, so without
+   * this the door is dropped for referencing a wall that demonstrably exists.
+   */
+  const wallsThisTurn = new Map<string, { position: Vec3; rotation: Quat }>();
+
   for (const action of actions) {
     switch (action.action) {
       case "place_object": {
@@ -76,54 +86,51 @@ export function applyActions(
         break;
       }
 
-      case "move_object": {
+      case "transform_object": {
         const id = resolve(action.objectId);
-        if (!id) {
+        const current = id ? scene.objects.find((o) => o.id === id) : undefined;
+        if (!id || !current) {
           dropped.push({ action, reason: `no object "${action.objectId}"` });
           break;
         }
-        events.push({
-          type: "object_moved",
-          t: ctx.t,
-          source: "model",
-          utterance: ctx.utterance,
-          objectId: id,
-          position: toVec3(action.position),
-        });
-        break;
-      }
 
-      case "rotate_object": {
-        const id = resolve(action.objectId);
-        if (!id) {
-          dropped.push({ action, reason: `no object "${action.objectId}"` });
-          break;
-        }
-        events.push({
-          type: "object_rotated",
-          t: ctx.t,
-          source: "model",
-          utterance: ctx.utterance,
-          objectId: id,
-          rotation: yawToQuat(action.yawDegrees),
-        });
-        break;
-      }
+        // The model restates the whole transform, so emit an event only where
+        // something actually moved. Emitting all three every time would make a
+        // single "undo" take back only the last of them.
+        const position = toVec3(action.position);
+        const rotation = yawToQuat(action.yawDegrees);
+        const scale = uniformScale(action.scale);
 
-      case "scale_object": {
-        const id = resolve(action.objectId);
-        if (!id) {
-          dropped.push({ action, reason: `no object "${action.objectId}"` });
-          break;
+        if (!sameVec(position, current.position)) {
+          events.push({
+            type: "object_moved",
+            t: ctx.t,
+            source: "model",
+            utterance: ctx.utterance,
+            objectId: id,
+            position,
+          });
         }
-        events.push({
-          type: "object_scaled",
-          t: ctx.t,
-          source: "model",
-          utterance: ctx.utterance,
-          objectId: id,
-          scale: uniformScale(action.scale),
-        });
+        if (!sameQuat(rotation, current.rotation)) {
+          events.push({
+            type: "object_rotated",
+            t: ctx.t,
+            source: "model",
+            utterance: ctx.utterance,
+            objectId: id,
+            rotation,
+          });
+        }
+        if (!sameVec(scale, current.scale)) {
+          events.push({
+            type: "object_scaled",
+            t: ctx.t,
+            source: "model",
+            utterance: ctx.utterance,
+            objectId: id,
+            scale,
+          });
+        }
         break;
       }
 
@@ -229,47 +236,146 @@ export function applyActions(
         });
         break;
 
-      case "set_sky":
-        events.push({
-          type: "environment_set",
-          t: ctx.t,
-          source: "model",
-          utterance: ctx.utterance,
-          environment: { sky: action.style },
-        });
-        break;
+      case "place_wall": {
+        const dx = action.end.x - action.start.x;
+        const dz = action.end.z - action.start.z;
+        const length = Math.hypot(dx, dz);
+        if (length < WALL.minLength) {
+          dropped.push({ action, reason: "wall endpoints are the same point" });
+          break;
+        }
 
-      case "set_ceiling":
+        const objectId = ctx.newObjectId(action.name);
+        const name = uniqueName(action.name, byName);
+        byId.set(objectId, name);
+        byName.set(normalise(name), objectId);
+
+        const wallPosition: Vec3 = [
+          (action.start.x + action.end.x) / 2,
+          0,
+          (action.start.z + action.end.z) / 2,
+        ];
+        const wallRotation = yawToQuat(wallYawDegrees(dx, dz));
+        wallsThisTurn.set(objectId, { position: wallPosition, rotation: wallRotation });
+
         events.push({
-          type: "environment_set",
+          type: "object_placed",
           t: ctx.t,
           source: "model",
           utterance: ctx.utterance,
-          environment: {
-            ceiling: action.style,
-            ceilingHeight: Math.min(
-              MAX_CEILING_HEIGHT,
-              Math.max(MIN_CEILING_HEIGHT, action.height),
-            ),
+          objectId,
+          name,
+          assetId: WALL_ASSET,
+          // Origin at the wall's base midpoint, so its geometry is built from
+          // the floor up and the door offsets are measured along local X.
+          position: wallPosition,
+          rotation: wallRotation,
+          // Left uniform: the real dimensions live in parameters, so geometry
+          // built at true size is not scaled a second time.
+          scale: [1, 1, 1],
+          parameters: {
+            length: Math.min(WALL.maxLength, length),
+            height: clamp(action.height, WALL.minHeight, WALL.maxHeight),
+            thickness: WALL.thickness,
+            style: action.style,
           },
         });
         break;
+      }
 
-      case "set_ground":
+      case "place_door": {
+        const wallId = resolve(action.wallId);
+        const existing = wallId ? scene.objects.find((o) => o.id === wallId) : undefined;
+        const wall =
+          existing && isWallAsset(existing.assetId)
+            ? { position: existing.position, rotation: existing.rotation }
+            : wallId
+              ? wallsThisTurn.get(wallId)
+              : undefined;
+        if (!wallId || !wall) {
+          dropped.push({ action, reason: `no wall "${action.wallId}" to put a door in` });
+          break;
+        }
+
+        const objectId = ctx.newObjectId(action.name);
+        const name = uniqueName(action.name, byName);
+        byId.set(objectId, name);
+        byName.set(normalise(name), objectId);
+
+        // The door's world transform is derived from its wall at render time,
+        // so the event carries the relationship rather than a duplicate copy of
+        // the wall's position that could drift if the wall moved.
+        events.push({
+          type: "object_placed",
+          t: ctx.t,
+          source: "model",
+          utterance: ctx.utterance,
+          objectId,
+          name,
+          assetId: DOOR_ASSET,
+          position: wall.position,
+          rotation: wall.rotation,
+          scale: [1, 1, 1],
+          parameters: {
+            wallId,
+            offset: clamp(action.offset, 0, 1),
+            width: clamp(action.width, DOOR.minWidth, DOOR.maxWidth),
+            height: clamp(action.height, DOOR.minHeight, DOOR.maxHeight),
+            style: action.style,
+            open: 0,
+          },
+        });
+        break;
+      }
+
+      case "set_door_open": {
+        const id = resolve(action.objectId);
+        if (!id) {
+          dropped.push({ action, reason: `no door "${action.objectId}"` });
+          break;
+        }
+        events.push({
+          type: "parameter_set",
+          t: ctx.t,
+          source: "model",
+          utterance: ctx.utterance,
+          objectId: id,
+          parameter: "open",
+          value: clamp(action.open, 0, 1),
+        });
+        break;
+      }
+
+      case "set_surface": {
+        // The grammar allows any style on any surface; legality is checked
+        // here so a mismatch drops one action instead of failing the turn.
+        if (!stylesFor(action.surface).includes(action.style)) {
+          dropped.push({
+            action,
+            reason: `"${action.style}" is not a ${action.surface} style`,
+          });
+          break;
+        }
+
+        const environment =
+          action.surface === "ground"
+            ? { groundMaterial: action.style as never, groundVisible: action.style !== "void" }
+            : action.surface === "sky"
+              ? { sky: action.style as never }
+              : {
+                  ceiling: action.style as never,
+                  ceilingHeight: clamp(action.height, MIN_CEILING_HEIGHT, MAX_CEILING_HEIGHT),
+                };
+
         events.push({
           type: "environment_set",
           t: ctx.t,
           source: "model",
           utterance: ctx.utterance,
-          environment: {
-            groundMaterial: action.style,
-            // "void" is the absence of a floor rather than a material, so the
-            // two fields are kept consistent here instead of asking the model
-            // to remember to set both.
-            groundVisible: action.style !== "void",
-          },
+          environment,
         });
         break;
+      }
 
       case "remove_object": {
         const id = resolve(action.objectId);
@@ -292,8 +398,28 @@ export function applyActions(
   return { events, dropped };
 }
 
+/** Loose comparison: model floats never round-trip exactly. */
+function sameVec(a: Vec3, b: Vec3): boolean {
+  return a.every((n, i) => Math.abs(n - b[i]!) < 1e-4);
+}
+
+function sameQuat(a: Quat, b: Quat): boolean {
+  return a.every((n, i) => Math.abs(n - b[i]!) < 1e-4);
+}
+
 function toVec3(v: Vec3Object): Vec3 {
   return [v.x, v.y, v.z];
+}
+
+/**
+ * Yaw that puts a wall's local +X along the line from start to end.
+ *
+ * A rotation of theta about +Y maps local X to (cos, 0, -sin), so aligning it
+ * with (dx, dz) needs atan2(-dz, dx) rather than the atan2(dx, dz) that a
+ * forward-facing object would use.
+ */
+function wallYawDegrees(dx: number, dz: number): number {
+  return (Math.atan2(-dz, dx) * 180) / Math.PI;
 }
 
 /** Yaw about world +Y, degrees, to an xyzw quaternion. */

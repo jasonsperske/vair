@@ -2,6 +2,8 @@ export * from "./math.js";
 export * from "./ground.js";
 export * from "./sky.js";
 export * from "./ceiling.js";
+export * from "./structures.js";
+export * from "./surfaces.js";
 export * from "./lights.js";
 export * from "./measurement.js";
 export * from "./affordance.js";
