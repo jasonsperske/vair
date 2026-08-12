@@ -8,8 +8,10 @@ import {
 import {
   DOOR,
   WALL,
+  WINDOW,
   clamp,
-  type DoorStyle,
+  type OpeningKind,
+  type OpeningStyle,
   type WallStyle,
 } from "@vair/shared";
 import type { SceneObject } from "@vair/shared";
@@ -37,11 +39,14 @@ const WALL_SPECS: Record<WallStyle, Spec> = {
   glass: { color: 0x9fc4d8, roughness: 0.1, metalness: 0.1, opacity: 0.28 },
 };
 
-const DOOR_SPECS: Record<DoorStyle, Spec> = {
+const DOOR_SPECS: Record<OpeningStyle, Spec> = {
   wood: { color: 0x6b4a2f, roughness: 0.75, metalness: 0, opacity: 1 },
   metal: { color: 0x8d9196, roughness: 0.45, metalness: 0.7, opacity: 1 },
   glass: { color: 0xbcd8e6, roughness: 0.1, metalness: 0.1, opacity: 0.35 },
 };
+
+/** Glazing is the same whatever the frame is made of. */
+const GLASS: Spec = { color: 0xbcd8e6, roughness: 0.05, metalness: 0.15, opacity: 0.25 };
 
 function materialFor(spec: Spec): MeshStandardMaterial {
   return new MeshStandardMaterial({
@@ -56,10 +61,13 @@ function materialFor(spec: Spec): MeshStandardMaterial {
 export type WallDims = { length: number; height: number; thickness: number; style: WallStyle };
 export type DoorDims = {
   wallId: string;
+  kind: OpeningKind;
   offset: number;
   width: number;
   height: number;
-  style: DoorStyle;
+  /** Metres from the floor to the bottom edge. 0 for a door. */
+  sill: number;
+  style: OpeningStyle;
   open: number;
 };
 
@@ -75,12 +83,16 @@ export function wallDimsOf(object: SceneObject): WallDims {
 
 export function doorDimsOf(object: SceneObject): DoorDims {
   const p = object.parameters;
+  const kind: OpeningKind = p.kind === "window" ? "window" : "door";
+  const fallback = kind === "window" ? WINDOW : DOOR;
   return {
     wallId: typeof p.wallId === "string" ? p.wallId : "",
+    kind,
     offset: typeof p.offset === "number" ? p.offset : 0.5,
-    width: typeof p.width === "number" ? p.width : DOOR.defaultWidth,
-    height: typeof p.height === "number" ? p.height : DOOR.defaultHeight,
-    style: (p.style as DoorStyle) ?? "wood",
+    width: typeof p.width === "number" ? p.width : fallback.defaultWidth,
+    height: typeof p.height === "number" ? p.height : fallback.defaultHeight,
+    sill: typeof p.sill === "number" ? p.sill : fallback.defaultSill,
+    style: (p.style as OpeningStyle) ?? "wood",
     open: typeof p.open === "number" ? p.open : 0,
   };
 }
@@ -107,10 +119,12 @@ export function createWall(object: SceneObject, doors: readonly SceneObject[]): 
     .map((d) => {
       const centre = -half + clamp(d.offset, 0, 1) * dims.length;
       const width = Math.min(d.width, dims.length);
+      const sill = clamp(d.sill, 0, Math.max(0, dims.height - 0.05));
       return {
         from: clamp(centre - width / 2, -half, half),
         to: clamp(centre + width / 2, -half, half),
-        height: Math.min(d.height, dims.height),
+        sill,
+        top: Math.min(sill + d.height, dims.height),
       };
     })
     .sort((a, b) => a.from - b.from);
@@ -122,16 +136,16 @@ export function createWall(object: SceneObject, doors: readonly SceneObject[]): 
     group.add(mesh);
   };
 
-  // Solid spans between the openings, plus a lintel over each one.
+  // Full-height spans between the openings, then for each opening an apron
+  // below it and a lintel above. The apron is what makes a window a window
+  // rather than a doorway that happens to start partway up.
   let cursor = -half;
   for (const opening of openings) {
+    const centre = (opening.from + opening.to) / 2;
+    const width = opening.to - opening.from;
     addBox(opening.from - cursor, dims.height, (cursor + opening.from) / 2, 0);
-    addBox(
-      opening.to - opening.from,
-      dims.height - opening.height,
-      (opening.from + opening.to) / 2,
-      opening.height,
-    );
+    addBox(width, opening.sill, centre, 0);
+    addBox(width, dims.height - opening.top, centre, opening.top);
     cursor = Math.max(cursor, opening.to);
   }
   addBox(half - cursor, dims.height, (cursor + half) / 2, 0);
@@ -140,10 +154,12 @@ export function createWall(object: SceneObject, doors: readonly SceneObject[]): 
 }
 
 /**
- * The door itself: a frame around the opening and a leaf that swings.
+ * What fills an opening: a leaf that swings for a door, a glazed pane in a
+ * frame for a window.
  *
  * Positioned in the wall's local space and then given the wall's world
- * transform by the caller, so a door never stores a copy of where its wall is.
+ * transform by the caller, so an opening never stores a copy of where its wall
+ * is and a moved wall cannot leave its windows behind.
  */
 export function createDoor(object: SceneObject, wall: SceneObject | undefined): Object3D {
   const dims = doorDimsOf(object);
@@ -151,14 +167,46 @@ export function createDoor(object: SceneObject, wall: SceneObject | undefined): 
   group.userData.vairDoor = true;
 
   const wallDims = wall ? wallDimsOf(wall) : null;
-  const material = materialFor(DOOR_SPECS[dims.style]);
-
-  // Hinged at one edge so it swings like a door rather than sliding.
-  const hinge = new Group();
+  const frameMaterial = materialFor(DOOR_SPECS[dims.style]);
   const leafThickness = Math.max(0.03, WALL.thickness * 0.4);
-  const leaf = new Mesh(new BoxGeometry(dims.width, dims.height, leafThickness), material);
-  leaf.position.set(dims.width / 2, dims.height / 2, 0);
-  hinge.add(leaf);
+
+  // Hinged at one edge so it swings, rather than sliding or fading.
+  const hinge = new Group();
+
+  if (dims.kind === "window") {
+    // Glazing plus a slim frame around it. Casement windows swing too, so the
+    // pane hangs off the same hinge and set_open works on either.
+    const inset = 0.05;
+    const pane = new Mesh(
+      new BoxGeometry(
+        Math.max(0.01, dims.width - inset * 2),
+        Math.max(0.01, dims.height - inset * 2),
+        leafThickness * 0.4,
+      ),
+      materialFor(GLASS),
+    );
+    pane.position.set(dims.width / 2, dims.height / 2, 0);
+    hinge.add(pane);
+
+    for (const [w, h, x, y] of [
+      [dims.width, inset, dims.width / 2, inset / 2],
+      [dims.width, inset, dims.width / 2, dims.height - inset / 2],
+      [inset, dims.height, inset / 2, dims.height / 2],
+      [inset, dims.height, dims.width - inset / 2, dims.height / 2],
+    ] as const) {
+      const bar = new Mesh(new BoxGeometry(w, h, leafThickness), frameMaterial);
+      bar.position.set(x, y, 0);
+      hinge.add(bar);
+    }
+  } else {
+    const leaf = new Mesh(
+      new BoxGeometry(dims.width, dims.height, leafThickness),
+      frameMaterial,
+    );
+    leaf.position.set(dims.width / 2, dims.height / 2, 0);
+    hinge.add(leaf);
+  }
+
   hinge.rotation.y = -clamp(dims.open, 0, 1) * (Math.PI / 2);
   group.add(hinge);
   group.userData.hinge = hinge;
@@ -166,8 +214,8 @@ export function createDoor(object: SceneObject, wall: SceneObject | undefined): 
   if (wallDims) {
     const half = wallDims.length / 2;
     const centre = -half + clamp(dims.offset, 0, 1) * wallDims.length;
-    // Hinge sits at the opening's left edge.
-    hinge.position.set(centre - dims.width / 2, 0, 0);
+    // Hinge at the opening's left edge, raised to the sill.
+    hinge.position.set(centre - dims.width / 2, dims.sill, 0);
   }
 
   return group;

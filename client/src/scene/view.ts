@@ -1,5 +1,5 @@
 import type { SceneEvent, SceneObject } from "@vair/shared";
-import { foldScene, isDoorAsset, isLightAsset, isWallAsset } from "@vair/shared";
+import { foldScene, isLightAsset, isOpeningAsset, isWallAsset } from "@vair/shared";
 import { primitiveFor, type ObjectRegistry } from "./registry.js";
 import { applyLightParameter, createLight, type LightParameters } from "./lights.js";
 import {
@@ -55,7 +55,7 @@ export class SceneView {
         };
         this.registry.add(object, this.nodeFor(object));
         // A new door cuts an opening, so its wall must be rebuilt around it.
-        if (isDoorAsset(object.assetId)) this.rebuildWall(doorDimsOf(object).wallId);
+        if (isOpeningAsset(object.assetId)) this.rebuildWall(doorDimsOf(object).wallId);
         break;
       }
 
@@ -80,7 +80,7 @@ export class SceneView {
       case "object_removed": {
         // Note the wall before the door is gone, so the opening can close up.
         const doomed = this.objectById(e.objectId);
-        const wallId = doomed && isDoorAsset(doomed.assetId) ? doorDimsOf(doomed).wallId : null;
+        const wallId = doomed && isOpeningAsset(doomed.assetId) ? doorDimsOf(doomed).wallId : null;
         this.registry.remove(e.objectId);
         if (wallId) this.rebuildWall(wallId);
         break;
@@ -138,7 +138,7 @@ export class SceneView {
     if (isWallAsset(object.assetId)) {
       return createWall(object, this.doorsFor(object.id));
     }
-    if (isDoorAsset(object.assetId)) {
+    if (isOpeningAsset(object.assetId)) {
       return createDoor(object, this.objectById(doorDimsOf(object).wallId));
     }
     return primitiveFor(object.assetId);
@@ -147,7 +147,7 @@ export class SceneView {
   private doorsFor(wallId: string): SceneObject[] {
     return this.log
       .scene()
-      .objects.filter((o) => isDoorAsset(o.assetId) && doorDimsOf(o).wallId === wallId);
+      .objects.filter((o) => isOpeningAsset(o.assetId) && doorDimsOf(o).wallId === wallId);
   }
 
   /** Drop and rebuild one object's node, for changes geometry depends on. */

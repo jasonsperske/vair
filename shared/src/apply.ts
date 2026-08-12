@@ -5,7 +5,7 @@ import type { SceneDocument } from "./scene.js";
 import { LIGHT_INTENSITY, lightAssetId } from "./lights.js";
 import { MAX_CEILING_HEIGHT, MIN_CEILING_HEIGHT } from "./ceiling.js";
 import { stylesFor } from "./surfaces.js";
-import { DOOR, DOOR_ASSET, WALL, WALL_ASSET, clamp, isWallAsset } from "./structures.js";
+import { DOOR, WALL, WALL_ASSET, clamp, isWallAsset, openingAssetFor } from "./structures.js";
 
 /**
  * Turning model intent into event drafts (plan.md §8).
@@ -283,7 +283,7 @@ export function applyActions(
         break;
       }
 
-      case "place_door": {
+      case "place_opening": {
         const wallId = resolve(action.wallId);
         const existing = wallId ? scene.objects.find((o) => o.id === wallId) : undefined;
         const wall =
@@ -293,7 +293,7 @@ export function applyActions(
               ? wallsThisTurn.get(wallId)
               : undefined;
         if (!wallId || !wall) {
-          dropped.push({ action, reason: `no wall "${action.wallId}" to put a door in` });
+          dropped.push({ action, reason: `no wall "${action.wallId}" to cut into` });
           break;
         }
 
@@ -312,15 +312,19 @@ export function applyActions(
           utterance: ctx.utterance,
           objectId,
           name,
-          assetId: DOOR_ASSET,
+          assetId: openingAssetFor(action.kind),
           position: wall.position,
           rotation: wall.rotation,
           scale: [1, 1, 1],
           parameters: {
             wallId,
+            kind: action.kind,
             offset: clamp(action.offset, 0, 1),
             width: clamp(action.width, DOOR.minWidth, DOOR.maxWidth),
             height: clamp(action.height, DOOR.minHeight, DOOR.maxHeight),
+            // A door ignores whatever sill it was given: it starts at the floor
+            // by definition, and a raised one would be a hole to step over.
+            sill: action.kind === "door" ? 0 : clamp(action.sill, 0, DOOR.maxSill),
             style: action.style,
             open: 0,
           },
@@ -328,10 +332,10 @@ export function applyActions(
         break;
       }
 
-      case "set_door_open": {
+      case "set_open": {
         const id = resolve(action.objectId);
         if (!id) {
-          dropped.push({ action, reason: `no door "${action.objectId}"` });
+          dropped.push({ action, reason: `nothing called "${action.objectId}" to open` });
           break;
         }
         events.push({

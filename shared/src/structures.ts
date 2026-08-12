@@ -28,14 +28,27 @@ export const WALL_STYLE_DESCRIPTIONS: Record<WallStyle, string> = {
   glass: "tinted glass, see-through",
 };
 
-export const DOOR_STYLES = ["wood", "metal", "glass"] as const;
-export type DoorStyle = (typeof DOOR_STYLES)[number];
+/**
+ * Doors and windows are the same thing — an opening cut in a wall — differing
+ * only in where the hole starts and what fills it. One action with a `kind`
+ * rather than two near-identical ones: that is the house rule, and it is also
+ * what keeps the compiled output grammar inside its size limit.
+ */
+export const OPENING_KINDS = ["door", "window"] as const;
+export type OpeningKind = (typeof OPENING_KINDS)[number];
 
-export const DOOR_STYLE_DESCRIPTIONS: Record<DoorStyle, string> = {
-  wood: "a panelled timber door",
-  metal: "a plain steel door",
-  glass: "a glazed door",
+export const OPENING_STYLES = ["wood", "metal", "glass"] as const;
+export type OpeningStyle = (typeof OPENING_STYLES)[number];
+
+export const OPENING_STYLE_DESCRIPTIONS: Record<OpeningStyle, string> = {
+  wood: "timber — a panelled door, or a wooden-framed window",
+  metal: "steel — a plain door, or a slim metal frame",
+  glass: "fully glazed, frame barely there",
 };
+
+/** Kept as aliases so existing call sites read naturally. */
+export const DOOR_STYLES = OPENING_STYLES;
+export type DoorStyle = OpeningStyle;
 
 export const WALL = {
   minHeight: 0.3,
@@ -49,16 +62,40 @@ export const WALL = {
 } as const;
 
 export const DOOR = {
-  minWidth: 0.5,
-  maxWidth: 4,
+  minWidth: 0.3,
+  maxWidth: 6,
   defaultWidth: 0.9,
-  minHeight: 1.2,
+  minHeight: 0.3,
   maxHeight: 6,
   defaultHeight: 2.05,
+  /** A door starts at the floor. A window does not — that is the difference. */
+  defaultSill: 0,
+  maxSill: 10,
+} as const;
+
+export const WINDOW = {
+  defaultWidth: 1.2,
+  defaultHeight: 1.2,
+  /** Waist height, so it reads as a window rather than a hole. */
+  defaultSill: 0.9,
 } as const;
 
 export const WALL_ASSET = "structure:wall";
 export const DOOR_ASSET = "structure:door";
+export const WINDOW_ASSET = "structure:window";
+
+export function openingAssetFor(kind: OpeningKind): string {
+  return kind === "window" ? WINDOW_ASSET : DOOR_ASSET;
+}
+
+export function isWindowAsset(assetId: string): boolean {
+  return assetId === WINDOW_ASSET;
+}
+
+/** True for anything that cuts a hole in a wall. */
+export function isOpeningAsset(assetId: string): boolean {
+  return assetId === DOOR_ASSET || assetId === WINDOW_ASSET;
+}
 
 export function isWallAsset(assetId: string): boolean {
   return assetId === WALL_ASSET;

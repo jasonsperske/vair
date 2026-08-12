@@ -196,11 +196,21 @@ of it, and a lintel above — rather than laying a door-shaped panel over a soli
 geometry is the textbook answer and far too heavy for a Quest; three boxes look identical from
 every angle that matters. A 4m wall with a 0.9m door becomes 1.55m + lintel + 1.55m.
 
+**A window is a door with a sill.** Both are one `place_opening` action with a `kind` — the only
+real difference is the height of the hole's bottom edge, and that difference is what the wall
+geometry reads to decide whether to build an apron beneath it. A door's sill is forced to the
+floor regardless of what the model asks for; a raised one would be a hole to step over.
+
 ```
 "put a brick wall from here to there"      → wall spanning both pointed-at spots
 "build me a room with a door in the front" → four walls, a door, a ceiling, a lamp
-"open the door"                            → the leaf swings on its hinge
+"place a window in this wall"              → uses the wall you POINTED at
+"open the door" / "shut the window"        → swings on its hinge
 ```
+
+"This wall" is deictic and resolves through `pointHit.objectId` — the measurement bundle already
+carries which object the finger was on, so with two walls in the scene it picks the one you were
+pointing at rather than the nearest. That path needed no new machinery; §6 had already built it.
 
 A door belongs to a wall and stores only that relationship, never a copy of the wall's position —
 so a moved wall can't leave its door behind. Removing a door rebuilds the wall and closes the hole.

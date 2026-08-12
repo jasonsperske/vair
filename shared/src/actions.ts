@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { LIGHT_COLORS, LIGHT_KINDS } from "./lights.js";
 import { SURFACE_STYLES } from "./surfaces.js";
-import { DOOR_STYLES, WALL_STYLES } from "./structures.js";
+import { OPENING_KINDS, OPENING_STYLES, WALL_STYLES } from "./structures.js";
 
 /**
  * The model-facing action vocabulary — the one validated schema boundary for
@@ -164,27 +164,32 @@ export const ModelAction = z.discriminatedUnion("action", [
     style: z.enum(WALL_STYLES),
   }),
   /**
-   * "put a door in that wall".
+   * "put a door in that wall", "place a window in this wall".
    *
-   * A door belongs to a wall and cuts a real opening in it — the wall is
-   * rebuilt as segments around the hole rather than having a panel laid over
-   * it. `offset` is a fraction along the wall so "in the middle" is 0.5 and the
+   * An opening belongs to a wall and cuts a real hole in it — the wall is
+   * rebuilt as segments around it rather than having a panel laid over the top.
+   * `offset` is a fraction along the wall so "in the middle" is 0.5 and the
    * model never has to work in metres from an end it cannot see.
+   *
+   * A door is an opening with sill 0; a window is one that starts partway up.
    */
   z.object({
-    action: z.literal("place_door"),
+    action: z.literal("place_opening"),
     name: z.string(),
-    /** id of the wall this door is cut into. */
+    /** id of the wall this is cut into. */
     wallId: z.string(),
+    kind: z.enum(OPENING_KINDS),
     /** 0 at the wall's start, 1 at its end. */
     offset: z.number(),
     width: z.number(),
     height: z.number(),
-    style: z.enum(DOOR_STYLES),
+    /** Metres from the floor to the bottom edge. 0 for a door. */
+    sill: z.number(),
+    style: z.enum(OPENING_STYLES),
   }),
-  /** "open the door", "shut it" — 0 is closed, 1 is fully open. */
+  /** "open the door", "shut the window" — 0 is closed, 1 is fully open. */
   z.object({
-    action: z.literal("set_door_open"),
+    action: z.literal("set_open"),
     objectId: z.string(),
     open: z.number(),
   }),

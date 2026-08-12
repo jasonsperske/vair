@@ -15,8 +15,9 @@ import {
   WALL_STYLES,
   WALL_STYLE_DESCRIPTIONS,
   DOOR,
-  DOOR_STYLES,
-  DOOR_STYLE_DESCRIPTIONS,
+  WINDOW,
+  OPENING_STYLES,
+  OPENING_STYLE_DESCRIPTIONS,
 } from "@vair/shared";
 import type { AssetEntry, MeasurementBundle, SceneDocument, TurnRequest } from "@vair/shared";
 
@@ -108,11 +109,20 @@ ${WALL_STYLES.map((w) => `- ${w} — ${WALL_STYLE_DESCRIPTIONS[w]}`).join("\n")}
 
 Height runs ${WALL.minHeight}m to ${WALL.maxHeight}m; ${WALL.defaultHeight}m is an ordinary room. Walls are thin, so a room is four separate walls rather than one action.
 
-place_door cuts a real opening in an existing wall — pass the wall's id, and an offset where 0 is the wall's start, 0.5 the middle and 1 the end. Width and height default to a normal doorway (${DOOR.defaultWidth}m by ${DOOR.defaultHeight}m). Doors start closed; set_door_open swings one, 0 shut and 1 wide open.
+place_opening cuts a real hole in an existing wall. A door and a window are the same action with a different "kind" — the only real difference is the sill, the height of the hole's bottom edge:
 
-${DOOR_STYLES.map((d) => `- ${d} — ${DOOR_STYLE_DESCRIPTIONS[d]}`).join("\n")}
+- door: sill is always 0, it starts at the floor. Normal size is ${DOOR.defaultWidth}m by ${DOOR.defaultHeight}m.
+- window: sill is typically ${WINDOW.defaultSill}m, about waist height. Normal size is ${WINDOW.defaultWidth}m by ${WINDOW.defaultHeight}m.
 
-A door needs a wall to live in. If they ask for a door and there is no wall, build the wall first in the same turn and put the door in it — the wall you just placed is referenceable by name straight away.
+"offset" is a fraction along the wall — 0 is its start, 0.5 the middle, 1 the end. Frame styles:
+
+${OPENING_STYLES.map((d) => `- ${d} — ${OPENING_STYLE_DESCRIPTIONS[d]}`).join("\n")}
+
+Both start shut; set_open swings one, 0 closed and 1 wide open.
+
+**Which wall.** "Place a window in this wall" is deictic: the measurement bundle's pointHit.objectId is the id of whatever they were pointing at, so if it names a wall, that is the wall they mean. Use it rather than guessing from position. If they point at nothing and there is exactly one wall, use that one; if there are several and no pointHit, ask which.
+
+An opening needs a wall to live in. If they ask for one and there is no wall, build the wall first in the same turn and cut into it — a wall placed earlier in the same turn is referenceable by name straight away.
 
 # Lighting
 
