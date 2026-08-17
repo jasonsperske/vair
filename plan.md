@@ -34,9 +34,38 @@ add config flags for them.
 - Passthrough / mixed reality / room scanning. The scene is a fully immersive black void.
 - Multiplayer or real-time collaboration.
 - A web-based 3D scene editor. The companion web app is view-and-share only (see §10).
-- Runtime mesh generation, Gaussian splats, or any diffusion-based 3D asset creation.
+- Gaussian splats, or any diffusion-based 3D asset creation. **Amended:** parametric shape
+  generators are now in scope — see below. What stays dead is generating geometry from a model
+  at the point of use.
 - Store distribution, monetisation, accounts-with-billing.
 - Native Unity or Unreal builds. See §11 for the one native exception.
+
+### Amendment: parametric props
+
+The original list ruled out "runtime mesh generation" alongside splats and diffusion, and the
+reasoning was about the same thing in all three cases: the editing loop is the product (§1), and
+generating geometry at the point of use puts an unbounded, unpredictable cost inside the loop.
+
+A **parametric generator** is a different animal. It is a deterministic function from a handful of
+named numbers to a mesh — "a table 2000 long with tapered legs" — with no model in the loop, no
+inference latency, and the same answer every time. It is the difference between generating a prop
+and *specifying* one. Ruling it out cost us the ability to say "a bit taller" about a piece of
+furniture and mean it.
+
+What is in scope, therefore:
+
+- Generators are fetched from a hosted build of the Object Studio library and **baked to a glTF on
+  the server**, cached against a hash of the parameters (`server/src/assets/bake.ts`).
+- **The client only loads a URL that returns a `.glb`.** No mesh-building code reaches the headset
+  and nothing lands in the frame budget, which is what §2 was protecting and §13 still requires.
+  It is not literally untouched: props were primitives only until now, so the glTF path had to be
+  built (`client/src/scene/gltf.ts`). Assuming otherwise is how every generator spent its first
+  outing rendering as a cube.
+- Parameters ride inside the `assetId` string as a query, so no action changed and the
+  structured-output grammar did not grow (see CLAUDE.md on its size limit).
+
+What stays dead, unchanged: splats, diffusion, and any asset source that needs a model to produce
+geometry.
 
 ---
 
@@ -102,7 +131,7 @@ alongside the number or a later Quest 3 run will look like a regression.
 /server          Node API
   /stt           audio -> transcript with word timings
   /claude        prompt assembly, schema validation, streaming
-  /assets        catalogue, search, glTF serving
+  /assets        catalogue, search, glTF serving, parametric generators (§2)
   /scenes        persistence, event log storage
 /shared          scene schema (zod), affordance grammar types
 /web             companion app (library + share, NOT an editor)

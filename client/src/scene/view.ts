@@ -1,6 +1,7 @@
 import type { SceneEvent, SceneObject } from "@vair/shared";
-import { foldScene, isLightAsset, isOpeningAsset, isWallAsset } from "@vair/shared";
+import { foldScene, isLightAsset, isOpeningAsset, isStudioAsset, isWallAsset } from "@vair/shared";
 import { primitiveFor, type ObjectRegistry } from "./registry.js";
+import { loadMesh } from "./gltf.js";
 import { applyLightParameter, createLight, type LightParameters } from "./lights.js";
 import {
   applyDoorParameter,
@@ -124,8 +125,9 @@ export class SceneView {
    * A placed object becomes a light, a wall, a door or a mesh, decided by its
    * asset id.
    *
-   * Primitives only for props so far. M3 proper swaps that for a GLTFLoader
-   * keyed on assetId, with the primitive kept as the §14 fallback.
+   * A "studio:" id is a generated mesh and loads asynchronously (gltf.ts).
+   * Everything else is still a primitive, which is also the §14 fallback when a
+   * load fails — never nothing.
    */
   private nodeFor(object: SceneObject) {
     if (isLightAsset(object.assetId)) {
@@ -140,6 +142,9 @@ export class SceneView {
     }
     if (isOpeningAsset(object.assetId)) {
       return createDoor(object, this.objectById(doorDimsOf(object).wallId));
+    }
+    if (isStudioAsset(object.assetId)) {
+      return loadMesh(object.assetId);
     }
     return primitiveFor(object.assetId);
   }

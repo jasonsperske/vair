@@ -5,6 +5,7 @@ export * from "./ceiling.js";
 export * from "./structures.js";
 export * from "./surfaces.js";
 export * from "./lights.js";
+export * from "./studio.js";
 export * from "./measurement.js";
 export * from "./affordance.js";
 export * from "./scene.js";

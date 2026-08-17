@@ -1,0 +1,5228 @@
+{
+  "format": 1,
+  "library": "Object Studio",
+  "license": "CC0-1.0",
+  "guide": "CLAUDE.md",
+  "runtime": "runtime.js",
+  "objects": [
+    {
+      "id": "all-in-one",
+      "name": "All-in-one",
+      "description": "The 2007–18 machine behind the screen — sized entirely by its panel, with a slot-loading drive, a chin or a bezel, and a foot, an arm or nothing at all.",
+      "doc": "all-in-one.md",
+      "source": "all-in-one.js",
+      "params": [
+        {
+          "id": "panel",
+          "label": "Panel",
+          "type": "number",
+          "default": 24,
+          "group": "Panel",
+          "help": "The diagonal. Everything else on this machine follows from it.",
+          "unit": "″",
+          "min": 17,
+          "max": 34,
+          "step": 0.5
+        },
+        {
+          "id": "aspect",
+          "label": "Shape",
+          "type": "select",
+          "default": "sixteenNine",
+          "group": "Panel",
+          "options": [
+            {
+              "value": "sixteenTen",
+              "label": "16:10"
+            },
+            {
+              "value": "sixteenNine",
+              "label": "16:9"
+            }
+          ]
+        },
+        {
+          "id": "bezel",
+          "label": "Bezel",
+          "type": "number",
+          "default": 18,
+          "group": "Panel",
+          "help": "Round the sides and the top. It got thinner every year.",
+          "unit": "mm",
+          "min": 4,
+          "max": 40,
+          "step": 1
+        },
+        {
+          "id": "chin",
+          "label": "Chin",
+          "type": "number",
+          "default": 52,
+          "group": "Panel",
+          "help": "The deeper band under the panel, where the board and the badge went.",
+          "unit": "mm",
+          "min": 8,
+          "max": 120,
+          "step": 1
+        },
+        {
+          "id": "screenOn",
+          "label": "Switched on",
+          "type": "boolean",
+          "default": true,
+          "group": "Panel"
+        },
+        {
+          "id": "webcam",
+          "label": "Webcam",
+          "type": "boolean",
+          "default": true,
+          "group": "Panel"
+        },
+        {
+          "id": "thickness",
+          "label": "Thickness",
+          "type": "number",
+          "default": 42,
+          "group": "Case",
+          "help": "At the thickest point. A slot-loading drive needs about 30.",
+          "unit": "mm",
+          "min": 12,
+          "max": 90,
+          "step": 1
+        },
+        {
+          "id": "taper",
+          "label": "Tapered back",
+          "type": "boolean",
+          "default": true,
+          "group": "Case",
+          "help": "Thick in the middle where the board is, thin at the edges."
+        },
+        {
+          "id": "finish",
+          "label": "Finish",
+          "type": "select",
+          "default": "aluminium",
+          "group": "Case",
+          "options": [
+            {
+              "value": "white",
+              "label": "White plastic"
+            },
+            {
+              "value": "silver",
+              "label": "Silver plastic"
+            },
+            {
+              "value": "aluminium",
+              "label": "Aluminium"
+            },
+            {
+              "value": "black",
+              "label": "Black"
+            },
+            {
+              "value": "glassBlack",
+              "label": "Black behind glass"
+            }
+          ]
+        },
+        {
+          "id": "radius",
+          "label": "Corner radius",
+          "type": "number",
+          "default": 14,
+          "group": "Case",
+          "unit": "mm",
+          "min": 0,
+          "max": 40,
+          "step": 1
+        },
+        {
+          "id": "badge",
+          "label": "Badge on the chin",
+          "type": "boolean",
+          "default": true,
+          "group": "Case"
+        },
+        {
+          "id": "optical",
+          "label": "Optical drive",
+          "type": "select",
+          "default": "slot",
+          "group": "Fittings",
+          "options": [
+            {
+              "value": "none",
+              "label": "None — it was the first thing to go"
+            },
+            {
+              "value": "slot",
+              "label": "Slot loading, in the side"
+            },
+            {
+              "value": "tray",
+              "label": "Tray loading, in the side"
+            }
+          ]
+        },
+        {
+          "id": "cardReader",
+          "label": "Card reader",
+          "type": "boolean",
+          "default": true,
+          "group": "Fittings"
+        },
+        {
+          "id": "ports",
+          "label": "Ports on the back",
+          "type": "int",
+          "default": 6,
+          "group": "Fittings",
+          "min": 2,
+          "max": 8,
+          "step": 1
+        },
+        {
+          "id": "speakerGrille",
+          "label": "Speaker grille under the chin",
+          "type": "boolean",
+          "default": true,
+          "group": "Fittings"
+        },
+        {
+          "id": "stand",
+          "label": "Stand",
+          "type": "select",
+          "default": "foot",
+          "group": "Stand",
+          "options": [
+            {
+              "value": "foot",
+              "label": "Foot — a plate and a neck"
+            },
+            {
+              "value": "arm",
+              "label": "Arm — a hinged one, off a slab"
+            },
+            {
+              "value": "easel",
+              "label": "Easel — a leg folded out of the back"
+            },
+            {
+              "value": "none",
+              "label": "None — on a wall mount"
+            }
+          ]
+        },
+        {
+          "id": "standHeight",
+          "label": "How high it holds it",
+          "type": "number",
+          "default": 120,
+          "group": "Stand",
+          "unit": "mm",
+          "min": 40,
+          "max": 260,
+          "step": 5,
+          "conditional": true
+        },
+        {
+          "id": "tilt",
+          "label": "Tilt",
+          "type": "number",
+          "default": 8,
+          "group": "Stand",
+          "unit": "°",
+          "min": -5,
+          "max": 25,
+          "step": 1
+        },
+        {
+          "id": "keyboard",
+          "label": "Keyboard and mouse",
+          "type": "boolean",
+          "default": true,
+          "group": "Desk",
+          "help": "The slim wireless pair these came with."
+        }
+      ],
+      "presets": [
+        {
+          "name": "2007 white all-in-one",
+          "params": {
+            "panel": 20,
+            "aspect": "sixteenTen",
+            "bezel": 26,
+            "chin": 62,
+            "thickness": 60,
+            "taper": true,
+            "finish": "white",
+            "radius": 20,
+            "optical": "slot",
+            "cardReader": false,
+            "stand": "foot",
+            "standHeight": 110,
+            "tilt": 10,
+            "keyboard": true
+          }
+        },
+        {
+          "name": "2010 aluminium 27″",
+          "params": {
+            "panel": 27,
+            "aspect": "sixteenNine",
+            "bezel": 22,
+            "chin": 56,
+            "thickness": 54,
+            "taper": true,
+            "finish": "aluminium",
+            "radius": 12,
+            "optical": "slot",
+            "cardReader": true,
+            "stand": "foot",
+            "standHeight": 140,
+            "tilt": 6,
+            "ports": 8,
+            "keyboard": true
+          }
+        },
+        {
+          "name": "2012 office 21″",
+          "params": {
+            "panel": 21.5,
+            "aspect": "sixteenNine",
+            "bezel": 16,
+            "chin": 44,
+            "thickness": 46,
+            "taper": false,
+            "finish": "black",
+            "radius": 8,
+            "optical": "tray",
+            "cardReader": true,
+            "stand": "arm",
+            "standHeight": 130,
+            "tilt": 8,
+            "ports": 6,
+            "keyboard": true
+          }
+        },
+        {
+          "name": "2015 thin bezel",
+          "params": {
+            "panel": 24,
+            "aspect": "sixteenNine",
+            "bezel": 8,
+            "chin": 26,
+            "thickness": 24,
+            "taper": true,
+            "finish": "silver",
+            "radius": 8,
+            "optical": "none",
+            "cardReader": true,
+            "stand": "easel",
+            "standHeight": 90,
+            "tilt": 12,
+            "ports": 5,
+            "speakerGrille": true,
+            "keyboard": true
+          }
+        },
+        {
+          "name": "2018 wall-mounted",
+          "params": {
+            "panel": 27,
+            "aspect": "sixteenNine",
+            "bezel": 6,
+            "chin": 14,
+            "thickness": 18,
+            "taper": false,
+            "finish": "glassBlack",
+            "radius": 6,
+            "optical": "none",
+            "cardReader": false,
+            "stand": "none",
+            "tilt": 0,
+            "ports": 4,
+            "badge": false,
+            "keyboard": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "at-desktop",
+      "name": "AT desktop",
+      "description": "The 1984–93 desktop with the monitor on top — case sized from the board standard, the card height and the drive bays, with full-height or half-height 5¼\" openings and ISA cards.",
+      "doc": "at-desktop.md",
+      "source": "at-desktop.js",
+      "params": [
+        {
+          "id": "board",
+          "label": "Board",
+          "type": "select",
+          "default": "at",
+          "group": "Board",
+          "help": "The standard the case is built around. Everything else follows from it.",
+          "options": [
+            {
+              "value": "xt",
+              "label": "PC/XT — 216 × 330 mm, 8-bit slots"
+            },
+            {
+              "value": "at",
+              "label": "AT — 305 × 351 mm, 16-bit slots"
+            },
+            {
+              "value": "babyAt",
+              "label": "Baby-AT — 216 × 330 mm, 16-bit slots"
+            }
+          ]
+        },
+        {
+          "id": "slots",
+          "label": "Slots cut in the back",
+          "type": "int",
+          "default": 8,
+          "group": "Board",
+          "min": 3,
+          "max": 8,
+          "step": 1
+        },
+        {
+          "id": "cards",
+          "label": "Cards fitted",
+          "type": "int",
+          "default": 4,
+          "group": "Board",
+          "help": "Video, disk controller, serial and parallel, and whatever else the machine needed.",
+          "min": 0,
+          "max": 8,
+          "step": 1
+        },
+        {
+          "id": "cutaway",
+          "label": "Lid off",
+          "type": "boolean",
+          "default": false,
+          "group": "Board",
+          "help": "Takes the lid and the near side away, and builds the board, the cards, the supply and the drive cage."
+        },
+        {
+          "id": "bayHeight",
+          "label": "Bay openings",
+          "type": "select",
+          "default": "half",
+          "group": "Drives",
+          "help": "Full height is the early one: two of them filled the front. Half height came in around 1985 and doubled what would fit.",
+          "options": [
+            {
+              "value": "full",
+              "label": "Full height — 82.5 mm"
+            },
+            {
+              "value": "half",
+              "label": "Half height — 41.3 mm"
+            }
+          ]
+        },
+        {
+          "id": "bayColumns",
+          "label": "Bay columns",
+          "type": "int",
+          "default": 2,
+          "group": "Drives",
+          "help": "Side by side across the front. Each column widens the case by 158 mm.",
+          "min": 1,
+          "max": 2,
+          "step": 1
+        },
+        {
+          "id": "floppies",
+          "label": "5¼\" floppy drives",
+          "type": "int",
+          "default": 2,
+          "group": "Drives",
+          "min": 0,
+          "max": 4,
+          "step": 1
+        },
+        {
+          "id": "smallFloppy",
+          "label": "3½\" floppy drive",
+          "type": "boolean",
+          "default": false,
+          "group": "Drives",
+          "help": "The later fitment, in a frame that filled a 5¼\" opening."
+        },
+        {
+          "id": "hardDisk",
+          "label": "Hard disk",
+          "type": "boolean",
+          "default": true,
+          "group": "Drives",
+          "help": "In a bay of its own, with a lamp on the front and no opening."
+        },
+        {
+          "id": "tapeDrive",
+          "label": "Tape streamer",
+          "type": "boolean",
+          "default": false,
+          "group": "Drives",
+          "help": "For the nightly backup, in the last free opening."
+        },
+        {
+          "id": "finish",
+          "label": "Finish",
+          "type": "select",
+          "default": "oatmeal",
+          "group": "Case",
+          "options": [
+            {
+              "value": "oatmeal",
+              "label": "Oatmeal"
+            },
+            {
+              "value": "beige",
+              "label": "Beige"
+            },
+            {
+              "value": "putty",
+              "label": "Putty"
+            },
+            {
+              "value": "grey",
+              "label": "Grey"
+            }
+          ]
+        },
+        {
+          "id": "keyLock",
+          "label": "Key lock",
+          "type": "boolean",
+          "default": true,
+          "group": "Case",
+          "help": "The barrel lock that froze the keyboard. Nobody knew where the key was."
+        },
+        {
+          "id": "turboButton",
+          "label": "Turbo button and clock display",
+          "type": "boolean",
+          "default": false,
+          "group": "Case",
+          "help": "A clone fitment, and the number on it was decorative."
+        },
+        {
+          "id": "badge",
+          "label": "Badge",
+          "type": "boolean",
+          "default": true,
+          "group": "Case"
+        },
+        {
+          "id": "display",
+          "label": "Monitor on top",
+          "type": "select",
+          "default": "green",
+          "group": "Desk",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "green",
+              "label": "Monochrome green"
+            },
+            {
+              "value": "amber",
+              "label": "Monochrome amber"
+            },
+            {
+              "value": "colour",
+              "label": "Colour"
+            }
+          ]
+        },
+        {
+          "id": "monitorSize",
+          "label": "Monitor",
+          "type": "number",
+          "default": 12,
+          "group": "Desk",
+          "unit": "″",
+          "min": 9,
+          "max": 16,
+          "step": 0.5,
+          "conditional": true
+        },
+        {
+          "id": "screenOn",
+          "label": "Switched on",
+          "type": "boolean",
+          "default": false,
+          "group": "Desk",
+          "conditional": true
+        },
+        {
+          "id": "keyboard",
+          "label": "Keyboard",
+          "type": "boolean",
+          "default": true,
+          "group": "Desk"
+        }
+      ],
+      "presets": [
+        {
+          "name": "1983 twin-floppy XT",
+          "params": {
+            "board": "xt",
+            "slots": 8,
+            "cards": 3,
+            "bayHeight": "full",
+            "bayColumns": 2,
+            "floppies": 2,
+            "smallFloppy": false,
+            "hardDisk": false,
+            "tapeDrive": false,
+            "finish": "oatmeal",
+            "keyLock": false,
+            "turboButton": false,
+            "display": "green",
+            "monitorSize": 12,
+            "keyboard": true
+          }
+        },
+        {
+          "name": "1984 AT with a hard disk",
+          "params": {
+            "board": "at",
+            "slots": 8,
+            "cards": 4,
+            "bayHeight": "full",
+            "bayColumns": 2,
+            "floppies": 1,
+            "smallFloppy": false,
+            "hardDisk": true,
+            "tapeDrive": false,
+            "finish": "oatmeal",
+            "keyLock": true,
+            "turboButton": false,
+            "display": "amber",
+            "monitorSize": 12,
+            "keyboard": true
+          }
+        },
+        {
+          "name": "1988 clone, turbo",
+          "params": {
+            "board": "babyAt",
+            "slots": 8,
+            "cards": 5,
+            "bayHeight": "half",
+            "bayColumns": 2,
+            "floppies": 2,
+            "smallFloppy": true,
+            "hardDisk": true,
+            "tapeDrive": false,
+            "finish": "beige",
+            "keyLock": true,
+            "turboButton": true,
+            "display": "colour",
+            "monitorSize": 14,
+            "keyboard": true
+          }
+        },
+        {
+          "name": "1990 office machine, lid off",
+          "params": {
+            "board": "babyAt",
+            "slots": 8,
+            "cards": 4,
+            "bayHeight": "half",
+            "bayColumns": 2,
+            "floppies": 1,
+            "smallFloppy": true,
+            "hardDisk": true,
+            "tapeDrive": true,
+            "finish": "putty",
+            "cutaway": true,
+            "keyLock": true,
+            "turboButton": false,
+            "display": "none",
+            "keyboard": true
+          }
+        },
+        {
+          "name": "1992 grey box",
+          "params": {
+            "board": "babyAt",
+            "slots": 6,
+            "cards": 3,
+            "bayHeight": "half",
+            "bayColumns": 1,
+            "floppies": 1,
+            "smallFloppy": true,
+            "hardDisk": true,
+            "tapeDrive": false,
+            "finish": "grey",
+            "keyLock": false,
+            "turboButton": true,
+            "display": "colour",
+            "monitorSize": 14,
+            "screenOn": true,
+            "keyboard": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "chair",
+      "name": "Chair",
+      "description": "A chair for the table — four seat shapes with the same moulded edges, seven backs from ladder to upholstered, five leg profiles including cabriole, optional arms, and the same fanciness dial.",
+      "doc": "chair.md",
+      "source": "chair.js",
+      "params": [
+        {
+          "id": "seatShape",
+          "label": "Seat shape",
+          "type": "select",
+          "default": "trapezoid",
+          "group": "Seat",
+          "options": [
+            {
+              "value": "square",
+              "label": "Square"
+            },
+            {
+              "value": "trapezoid",
+              "label": "Trapezoid — narrower at the back"
+            },
+            {
+              "value": "bowfront",
+              "label": "Bow front"
+            },
+            {
+              "value": "round",
+              "label": "Round"
+            }
+          ]
+        },
+        {
+          "id": "seatWidth",
+          "label": "Seat width",
+          "type": "number",
+          "default": 450,
+          "group": "Seat",
+          "help": "Across +Z, at the front.",
+          "unit": "mm",
+          "min": 260,
+          "max": 700,
+          "step": 5
+        },
+        {
+          "id": "seatDepth",
+          "label": "Seat depth",
+          "type": "number",
+          "default": 430,
+          "group": "Seat",
+          "unit": "mm",
+          "min": 260,
+          "max": 700,
+          "step": 5
+        },
+        {
+          "id": "seatHeight",
+          "label": "Seat height",
+          "type": "number",
+          "default": 460,
+          "group": "Seat",
+          "help": "Floor to the top of the seat. 450 sits at a 750 table.",
+          "unit": "mm",
+          "min": 250,
+          "max": 800,
+          "step": 5
+        },
+        {
+          "id": "seatThickness",
+          "label": "Seat thickness",
+          "type": "number",
+          "default": 34,
+          "group": "Seat",
+          "unit": "mm",
+          "min": 12,
+          "max": 90,
+          "step": 1
+        },
+        {
+          "id": "seatTaper",
+          "label": "Taper to the back",
+          "type": "number",
+          "default": 60,
+          "group": "Seat",
+          "unit": "mm",
+          "min": 0,
+          "max": 200,
+          "step": 5,
+          "conditional": true
+        },
+        {
+          "id": "cornerRadius",
+          "label": "Corner radius",
+          "type": "number",
+          "default": 30,
+          "group": "Seat",
+          "unit": "mm",
+          "min": 0,
+          "max": 150,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "edgeStyle",
+          "label": "Edge profile",
+          "type": "select",
+          "default": "rounded",
+          "group": "Seat",
+          "help": "The same profiles the table edge and the stair treads use.",
+          "options": [
+            {
+              "value": "square",
+              "label": "Square"
+            },
+            {
+              "value": "chamfer",
+              "label": "Chamfer"
+            },
+            {
+              "value": "rounded",
+              "label": "Round-over"
+            },
+            {
+              "value": "bullnose",
+              "label": "Bullnose"
+            },
+            {
+              "value": "cove",
+              "label": "Cove"
+            },
+            {
+              "value": "ogee",
+              "label": "Ogee"
+            }
+          ]
+        },
+        {
+          "id": "edgeSize",
+          "label": "Profile size",
+          "type": "number",
+          "default": 8,
+          "group": "Seat",
+          "unit": "mm",
+          "min": 0,
+          "max": 30,
+          "step": 0.5,
+          "conditional": true
+        },
+        {
+          "id": "backStyle",
+          "label": "Back",
+          "type": "select",
+          "default": "ladder",
+          "group": "Back",
+          "options": [
+            {
+              "value": "open",
+              "label": "Open — posts and a crest only"
+            },
+            {
+              "value": "ladder",
+              "label": "Ladder — horizontal slats"
+            },
+            {
+              "value": "spindle",
+              "label": "Spindle — vertical sticks"
+            },
+            {
+              "value": "splat",
+              "label": "Splat — one shaped centre board"
+            },
+            {
+              "value": "cross",
+              "label": "Cross — diagonal rails"
+            },
+            {
+              "value": "panel",
+              "label": "Panel — solid board"
+            },
+            {
+              "value": "upholstered",
+              "label": "Upholstered panel"
+            }
+          ]
+        },
+        {
+          "id": "backHeight",
+          "label": "Back height",
+          "type": "number",
+          "default": 470,
+          "group": "Back",
+          "help": "Above the seat.",
+          "unit": "mm",
+          "min": 100,
+          "max": 900,
+          "step": 5
+        },
+        {
+          "id": "backRake",
+          "label": "Rake",
+          "type": "number",
+          "default": 8,
+          "group": "Back",
+          "help": "How far the back leans away from vertical.",
+          "unit": "°",
+          "min": 0,
+          "max": 22,
+          "step": 0.5
+        },
+        {
+          "id": "backFill",
+          "label": "Slats or spindles",
+          "type": "int",
+          "default": 4,
+          "group": "Back",
+          "min": 1,
+          "max": 11,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "crestStyle",
+          "label": "Crest rail",
+          "type": "select",
+          "default": "arched",
+          "group": "Back",
+          "options": [
+            {
+              "value": "straight",
+              "label": "Straight"
+            },
+            {
+              "value": "arched",
+              "label": "Arched"
+            },
+            {
+              "value": "yoke",
+              "label": "Yoke — dipped in the middle"
+            }
+          ]
+        },
+        {
+          "id": "legProfile",
+          "label": "Leg profile",
+          "type": "select",
+          "default": "tapered",
+          "group": "Legs",
+          "options": [
+            {
+              "value": "square",
+              "label": "Square"
+            },
+            {
+              "value": "tapered",
+              "label": "Square, tapered"
+            },
+            {
+              "value": "round",
+              "label": "Round, tapered"
+            },
+            {
+              "value": "turned",
+              "label": "Turned — beads and a vase"
+            },
+            {
+              "value": "cabriole",
+              "label": "Cabriole — curved, on a pad foot"
+            }
+          ]
+        },
+        {
+          "id": "legThickness",
+          "label": "Leg thickness",
+          "type": "number",
+          "default": 38,
+          "group": "Legs",
+          "unit": "mm",
+          "min": 16,
+          "max": 90,
+          "step": 1
+        },
+        {
+          "id": "legTaper",
+          "label": "Taper to foot",
+          "type": "number",
+          "default": 0.7,
+          "group": "Legs",
+          "min": 0.3,
+          "max": 1,
+          "step": 0.01,
+          "conditional": true
+        },
+        {
+          "id": "splay",
+          "label": "Splay",
+          "type": "number",
+          "default": 4,
+          "group": "Legs",
+          "help": "How far the feet stand outside the seat.",
+          "unit": "°",
+          "min": 0,
+          "max": 18,
+          "step": 0.5
+        },
+        {
+          "id": "rearPost",
+          "label": "Back legs run up into the back",
+          "type": "boolean",
+          "default": true,
+          "group": "Legs",
+          "help": "Off puts the back posts on the seat instead, as a Windsor does."
+        },
+        {
+          "id": "stretcher",
+          "label": "Stretchers",
+          "type": "select",
+          "default": "h",
+          "group": "Legs",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "h",
+              "label": "H — side rails and a centre rail"
+            },
+            {
+              "value": "box",
+              "label": "Box — a rail on all four sides"
+            },
+            {
+              "value": "double",
+              "label": "Double — two rails across the front"
+            }
+          ]
+        },
+        {
+          "id": "stretcherHeight",
+          "label": "Stretcher height",
+          "type": "number",
+          "default": 170,
+          "group": "Legs",
+          "unit": "mm",
+          "min": 40,
+          "max": 400,
+          "step": 5,
+          "conditional": true
+        },
+        {
+          "id": "arms",
+          "label": "Arms",
+          "type": "boolean",
+          "default": false,
+          "group": "Arms"
+        },
+        {
+          "id": "armHeight",
+          "label": "Arm height",
+          "type": "number",
+          "default": 210,
+          "group": "Arms",
+          "help": "Above the seat.",
+          "unit": "mm",
+          "min": 100,
+          "max": 350,
+          "step": 5,
+          "conditional": true
+        },
+        {
+          "id": "seatPad",
+          "label": "Seat",
+          "type": "select",
+          "default": "none",
+          "group": "Upholstery & ornament",
+          "options": [
+            {
+              "value": "none",
+              "label": "Bare board"
+            },
+            {
+              "value": "over",
+              "label": "Squab — a cushion laid on top"
+            },
+            {
+              "value": "dropIn",
+              "label": "Drop-in — a pad inside a seat frame"
+            },
+            {
+              "value": "full",
+              "label": "Fully upholstered over the frame"
+            }
+          ]
+        },
+        {
+          "id": "padThickness",
+          "label": "Pad thickness",
+          "type": "number",
+          "default": 46,
+          "group": "Upholstery & ornament",
+          "unit": "mm",
+          "min": 10,
+          "max": 140,
+          "step": 2,
+          "conditional": true
+        },
+        {
+          "id": "padColor",
+          "label": "Upholstery",
+          "type": "select",
+          "default": "sage",
+          "group": "Upholstery & ornament",
+          "options": [
+            {
+              "value": "linen",
+              "label": "Linen"
+            },
+            {
+              "value": "sage",
+              "label": "Sage"
+            },
+            {
+              "value": "oxblood",
+              "label": "Oxblood"
+            },
+            {
+              "value": "charcoal",
+              "label": "Charcoal"
+            },
+            {
+              "value": "teal",
+              "label": "Teal"
+            }
+          ],
+          "conditional": true
+        },
+        {
+          "id": "fancy",
+          "label": "Fanciness",
+          "type": "int",
+          "default": 1,
+          "group": "Upholstery & ornament",
+          "help": "1 beads the seat edge, 2 shapes the back boards and pads the feet, 3 adds corbels and scrolls the arms, 4 turns finials and rings, 5 carves the crest and buttons the upholstery.",
+          "min": 0,
+          "max": 5,
+          "step": 1
+        }
+      ],
+      "presets": [
+        {
+          "name": "Farmhouse ladderback",
+          "params": {
+            "seatShape": "trapezoid",
+            "seatWidth": 450,
+            "seatDepth": 420,
+            "seatHeight": 455,
+            "seatThickness": 30,
+            "edgeStyle": "chamfer",
+            "edgeSize": 5,
+            "backStyle": "ladder",
+            "backHeight": 520,
+            "backFill": 4,
+            "crestStyle": "arched",
+            "backRake": 7,
+            "legProfile": "tapered",
+            "legThickness": 42,
+            "stretcher": "h",
+            "fancy": 1
+          }
+        },
+        {
+          "name": "Windsor spindle",
+          "params": {
+            "seatShape": "bowfront",
+            "seatWidth": 460,
+            "seatDepth": 430,
+            "seatHeight": 450,
+            "seatThickness": 42,
+            "seatTaper": 90,
+            "edgeStyle": "bullnose",
+            "backStyle": "spindle",
+            "backHeight": 560,
+            "backFill": 7,
+            "crestStyle": "arched",
+            "backRake": 13,
+            "legProfile": "turned",
+            "legThickness": 44,
+            "splay": 13,
+            "rearPost": false,
+            "stretcher": "h",
+            "stretcherHeight": 190,
+            "fancy": 2
+          }
+        },
+        {
+          "name": "Georgian splat",
+          "params": {
+            "seatShape": "trapezoid",
+            "seatWidth": 480,
+            "seatDepth": 440,
+            "seatHeight": 470,
+            "seatThickness": 26,
+            "seatTaper": 110,
+            "cornerRadius": 45,
+            "edgeStyle": "ogee",
+            "edgeSize": 9,
+            "backStyle": "splat",
+            "backHeight": 540,
+            "crestStyle": "yoke",
+            "backRake": 10,
+            "legProfile": "cabriole",
+            "legThickness": 46,
+            "stretcher": "none",
+            "seatPad": "dropIn",
+            "padThickness": 55,
+            "padColor": "oxblood",
+            "fancy": 4
+          }
+        },
+        {
+          "name": "Carver armchair",
+          "params": {
+            "seatShape": "trapezoid",
+            "seatWidth": 520,
+            "seatDepth": 460,
+            "seatHeight": 460,
+            "seatThickness": 32,
+            "backStyle": "ladder",
+            "backHeight": 560,
+            "backFill": 3,
+            "crestStyle": "yoke",
+            "backRake": 9,
+            "legProfile": "turned",
+            "legThickness": 46,
+            "stretcher": "box",
+            "arms": true,
+            "armHeight": 215,
+            "fancy": 4
+          }
+        },
+        {
+          "name": "Upholstered dining",
+          "params": {
+            "seatShape": "square",
+            "seatWidth": 470,
+            "seatDepth": 460,
+            "seatHeight": 450,
+            "seatThickness": 36,
+            "cornerRadius": 20,
+            "edgeStyle": "rounded",
+            "backStyle": "upholstered",
+            "backHeight": 480,
+            "crestStyle": "straight",
+            "backRake": 11,
+            "legProfile": "square",
+            "legThickness": 40,
+            "stretcher": "none",
+            "seatPad": "full",
+            "padThickness": 70,
+            "padColor": "charcoal",
+            "fancy": 2
+          }
+        },
+        {
+          "name": "Modern tapered",
+          "params": {
+            "seatShape": "square",
+            "seatWidth": 440,
+            "seatDepth": 430,
+            "seatHeight": 450,
+            "seatThickness": 20,
+            "cornerRadius": 60,
+            "edgeStyle": "rounded",
+            "edgeSize": 6,
+            "backStyle": "panel",
+            "backHeight": 380,
+            "crestStyle": "straight",
+            "backRake": 14,
+            "legProfile": "round",
+            "legThickness": 30,
+            "legTaper": 0.55,
+            "splay": 7,
+            "stretcher": "none",
+            "fancy": 0
+          }
+        },
+        {
+          "name": "Cross-back café",
+          "params": {
+            "seatShape": "round",
+            "seatWidth": 420,
+            "seatDepth": 420,
+            "seatHeight": 455,
+            "seatThickness": 24,
+            "edgeStyle": "rounded",
+            "edgeSize": 8,
+            "backStyle": "cross",
+            "backHeight": 440,
+            "crestStyle": "straight",
+            "backRake": 9,
+            "legProfile": "round",
+            "legThickness": 34,
+            "splay": 9,
+            "stretcher": "box",
+            "stretcherHeight": 150,
+            "fancy": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "fractal-tree",
+      "name": "Fractal tree",
+      "description": "A seeded recursive tree — branch count, angle, taper and droop shape the habit, with leaf and fruit or blossom models on the outer growth.",
+      "doc": "fractal-tree.md",
+      "source": "fractal-tree.js",
+      "params": [
+        {
+          "id": "height",
+          "label": "Trunk length",
+          "type": "number",
+          "default": 1400,
+          "group": "Trunk & branches",
+          "help": "Length of the first limb; the tree ends up taller than this.",
+          "unit": "mm",
+          "min": 200,
+          "max": 6000,
+          "step": 20
+        },
+        {
+          "id": "thickness",
+          "label": "Branch thickness",
+          "type": "number",
+          "default": 110,
+          "group": "Trunk & branches",
+          "help": "Diameter at the base of the trunk.",
+          "unit": "mm",
+          "min": 8,
+          "max": 500,
+          "step": 2
+        },
+        {
+          "id": "taper",
+          "label": "Taper",
+          "type": "number",
+          "default": 0.72,
+          "group": "Trunk & branches",
+          "help": "Thickness kept at each split.",
+          "min": 0.4,
+          "max": 0.95,
+          "step": 0.01
+        },
+        {
+          "id": "levels",
+          "label": "Levels",
+          "type": "int",
+          "default": 5,
+          "group": "Trunk & branches",
+          "help": "Depth of recursion.",
+          "min": 1,
+          "max": 8,
+          "step": 1
+        },
+        {
+          "id": "branches",
+          "label": "Branch frequency",
+          "type": "int",
+          "default": 3,
+          "group": "Trunk & branches",
+          "help": "Side branches at each split.",
+          "min": 1,
+          "max": 5,
+          "step": 1
+        },
+        {
+          "id": "branchAngle",
+          "label": "Branch angle",
+          "type": "number",
+          "default": 38,
+          "group": "Trunk & branches",
+          "unit": "°",
+          "min": 5,
+          "max": 85,
+          "step": 1
+        },
+        {
+          "id": "lengthRatio",
+          "label": "Length ratio",
+          "type": "number",
+          "default": 0.74,
+          "group": "Trunk & branches",
+          "help": "Length kept at each split.",
+          "min": 0.4,
+          "max": 0.95,
+          "step": 0.01
+        },
+        {
+          "id": "apical",
+          "label": "Apical dominance",
+          "type": "number",
+          "default": 0.3,
+          "group": "Trunk & branches",
+          "help": "How strongly a leader carries straight on. High makes a conifer, low a spreading crown.",
+          "min": 0,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "id": "twist",
+          "label": "Twist per level",
+          "type": "number",
+          "default": 137.5,
+          "group": "Trunk & branches",
+          "help": "Rotation between successive whorls. 137.5° is the golden angle.",
+          "unit": "°",
+          "min": 0,
+          "max": 180,
+          "step": 0.5
+        },
+        {
+          "id": "droop",
+          "label": "Droop",
+          "type": "number",
+          "default": 0,
+          "group": "Trunk & branches",
+          "help": "Positive weeps down, negative sweeps up.",
+          "unit": "°",
+          "min": -50,
+          "max": 50,
+          "step": 1
+        },
+        {
+          "id": "irregularity",
+          "label": "Irregularity",
+          "type": "number",
+          "default": 0.3,
+          "group": "Trunk & branches",
+          "min": 0,
+          "max": 1,
+          "step": 0.05
+        },
+        {
+          "id": "seed",
+          "label": "Seed",
+          "type": "int",
+          "default": 7,
+          "group": "Trunk & branches",
+          "help": "Same seed, same tree.",
+          "min": 1,
+          "max": 9999,
+          "step": 1
+        },
+        {
+          "id": "leafModel",
+          "label": "Leaf model",
+          "type": "select",
+          "default": "blade",
+          "group": "Foliage",
+          "options": [
+            {
+              "value": "none",
+              "label": "Bare"
+            },
+            {
+              "value": "blade",
+              "label": "Blade — simple pointed leaf"
+            },
+            {
+              "value": "lobed",
+              "label": "Lobed — oak"
+            },
+            {
+              "value": "round",
+              "label": "Round — poplar"
+            },
+            {
+              "value": "heart",
+              "label": "Heart — lime, birch"
+            },
+            {
+              "value": "needle",
+              "label": "Needle — conifer"
+            }
+          ]
+        },
+        {
+          "id": "leafSize",
+          "label": "Leaf size",
+          "type": "number",
+          "default": 90,
+          "group": "Foliage",
+          "unit": "mm",
+          "min": 5,
+          "max": 400,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "leafDensity",
+          "label": "Leaf frequency",
+          "type": "number",
+          "default": 70,
+          "group": "Foliage",
+          "unit": "%",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "leafLevels",
+          "label": "Leafy levels",
+          "type": "int",
+          "default": 2,
+          "group": "Foliage",
+          "help": "How many of the outermost levels carry leaves.",
+          "min": 1,
+          "max": 4,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "foliageColor",
+          "label": "Foliage colour",
+          "type": "select",
+          "default": "green",
+          "group": "Foliage",
+          "options": [
+            {
+              "value": "green",
+              "label": "Green"
+            },
+            {
+              "value": "deep",
+              "label": "Deep green"
+            },
+            {
+              "value": "olive",
+              "label": "Olive"
+            },
+            {
+              "value": "blue",
+              "label": "Blue-green"
+            },
+            {
+              "value": "autumn",
+              "label": "Autumn amber"
+            },
+            {
+              "value": "copper",
+              "label": "Copper"
+            }
+          ],
+          "conditional": true
+        },
+        {
+          "id": "fruitModel",
+          "label": "Fruit / flower model",
+          "type": "select",
+          "default": "none",
+          "group": "Fruit & flowers",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "berry",
+              "label": "Berry"
+            },
+            {
+              "value": "apple",
+              "label": "Apple — round fruit"
+            },
+            {
+              "value": "acorn",
+              "label": "Acorn"
+            },
+            {
+              "value": "cone",
+              "label": "Cone"
+            },
+            {
+              "value": "blossom",
+              "label": "Blossom"
+            }
+          ]
+        },
+        {
+          "id": "fruitSize",
+          "label": "Fruit size",
+          "type": "number",
+          "default": 55,
+          "group": "Fruit & flowers",
+          "unit": "mm",
+          "min": 4,
+          "max": 250,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "fruitFrequency",
+          "label": "Fruit frequency",
+          "type": "number",
+          "default": 30,
+          "group": "Fruit & flowers",
+          "unit": "%",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "fruitColor",
+          "label": "Fruit colour",
+          "type": "select",
+          "default": "red",
+          "group": "Fruit & flowers",
+          "options": [
+            {
+              "value": "red",
+              "label": "Red"
+            },
+            {
+              "value": "gold",
+              "label": "Gold"
+            },
+            {
+              "value": "purple",
+              "label": "Purple"
+            },
+            {
+              "value": "white",
+              "label": "White"
+            },
+            {
+              "value": "pink",
+              "label": "Pink"
+            },
+            {
+              "value": "brown",
+              "label": "Brown"
+            }
+          ],
+          "conditional": true
+        }
+      ],
+      "presets": [
+        {
+          "name": "Pine tree",
+          "params": {
+            "height": 1800,
+            "thickness": 160,
+            "taper": 0.82,
+            "branches": 4,
+            "branchAngle": 74,
+            "lengthRatio": 0.5,
+            "apical": 0.98,
+            "twist": 90,
+            "droop": 22,
+            "irregularity": 0.22,
+            "seed": 21,
+            "leafModel": "needle",
+            "leafSize": 210,
+            "leafDensity": 100,
+            "foliageColor": "deep",
+            "fruitModel": "cone",
+            "fruitSize": 110,
+            "fruitFrequency": 22,
+            "fruitColor": "brown"
+          }
+        },
+        {
+          "name": "Oak tree",
+          "params": {
+            "height": 1500,
+            "thickness": 300,
+            "taper": 0.7,
+            "branchAngle": 46,
+            "lengthRatio": 0.76,
+            "apical": 0.12,
+            "droop": -4,
+            "irregularity": 0.5,
+            "seed": 4,
+            "leafModel": "lobed",
+            "leafSize": 150,
+            "leafDensity": 85,
+            "fruitModel": "acorn",
+            "fruitSize": 60,
+            "fruitFrequency": 25,
+            "fruitColor": "brown"
+          }
+        },
+        {
+          "name": "Silver birch",
+          "params": {
+            "height": 1900,
+            "thickness": 90,
+            "taper": 0.76,
+            "branches": 2,
+            "branchAngle": 32,
+            "lengthRatio": 0.78,
+            "apical": 0.65,
+            "droop": 20,
+            "irregularity": 0.35,
+            "seed": 12,
+            "leafModel": "heart",
+            "leafSize": 80,
+            "leafDensity": 80,
+            "foliageColor": "olive",
+            "fruitFrequency": 0,
+            "fruitColor": "gold"
+          }
+        },
+        {
+          "name": "Apple tree",
+          "params": {
+            "height": 900,
+            "thickness": 160,
+            "taper": 0.68,
+            "branchAngle": 52,
+            "apical": 0.1,
+            "droop": 10,
+            "irregularity": 0.5,
+            "seed": 33,
+            "leafSize": 95,
+            "leafDensity": 80,
+            "fruitModel": "apple",
+            "fruitSize": 75,
+            "fruitFrequency": 35
+          }
+        },
+        {
+          "name": "Cherry blossom",
+          "params": {
+            "height": 1200,
+            "thickness": 180,
+            "taper": 0.7,
+            "branchAngle": 48,
+            "lengthRatio": 0.76,
+            "apical": 0.18,
+            "droop": 16,
+            "irregularity": 0.4,
+            "seed": 58,
+            "leafSize": 65,
+            "leafDensity": 30,
+            "foliageColor": "olive",
+            "fruitModel": "blossom",
+            "fruitSize": 70,
+            "fruitFrequency": 90,
+            "fruitColor": "pink"
+          }
+        },
+        {
+          "name": "Weeping willow",
+          "params": {
+            "height": 1700,
+            "thickness": 200,
+            "taper": 0.74,
+            "branchAngle": 42,
+            "lengthRatio": 0.82,
+            "apical": 0.4,
+            "droop": 45,
+            "irregularity": 0.4,
+            "seed": 77,
+            "leafSize": 120,
+            "leafDensity": 90,
+            "leafLevels": 3,
+            "foliageColor": "olive",
+            "fruitFrequency": 0,
+            "fruitColor": "gold"
+          }
+        }
+      ]
+    },
+    {
+      "id": "gaming-tower",
+      "name": "Gaming tower",
+      "description": "The 2002–12 black ATX tower — sized from its board and bays, with a double-height graphics card, PCI and PCI Express, a windowed side panel and the fans to go with it.",
+      "doc": "gaming-tower.md",
+      "source": "gaming-tower.js",
+      "params": [
+        {
+          "id": "board",
+          "label": "Board",
+          "type": "select",
+          "default": "atx",
+          "group": "Board",
+          "help": "Sets the footprint, the height of the case and how many slots there are.",
+          "options": [
+            {
+              "value": "atx",
+              "label": "ATX — 305 × 244 mm, 7 slots"
+            },
+            {
+              "value": "microAtx",
+              "label": "microATX — 244 × 244 mm, 4 slots"
+            },
+            {
+              "value": "miniItx",
+              "label": "mini-ITX — 170 × 170 mm, 1 slot"
+            }
+          ]
+        },
+        {
+          "id": "graphicsCard",
+          "label": "Graphics card",
+          "type": "boolean",
+          "default": true,
+          "group": "Board",
+          "help": "Double height with its own cooler, and it takes two slots."
+        },
+        {
+          "id": "cards",
+          "label": "Other cards",
+          "type": "int",
+          "default": 1,
+          "group": "Board",
+          "help": "Sound, network, capture, or a second graphics card.",
+          "min": 0,
+          "max": 5,
+          "step": 1
+        },
+        {
+          "id": "cutaway",
+          "label": "Side panel off",
+          "type": "boolean",
+          "default": false,
+          "group": "Board"
+        },
+        {
+          "id": "bays525",
+          "label": "5¼\" openings",
+          "type": "int",
+          "default": 2,
+          "group": "Drives",
+          "help": "41.3 mm of case height each.",
+          "min": 0,
+          "max": 4,
+          "step": 1
+        },
+        {
+          "id": "optical",
+          "label": "Optical drives",
+          "type": "int",
+          "default": 1,
+          "group": "Drives",
+          "help": "DVD, then Blu-ray. The same tray from the outside.",
+          "min": 0,
+          "max": 2,
+          "step": 1
+        },
+        {
+          "id": "fanController",
+          "label": "Fan controller",
+          "type": "boolean",
+          "default": false,
+          "group": "Drives",
+          "help": "In a 5¼\" opening, with dials and a temperature readout."
+        },
+        {
+          "id": "cardReader",
+          "label": "Card reader",
+          "type": "boolean",
+          "default": true,
+          "group": "Drives",
+          "help": "In the 3½\" opening the floppy used to have."
+        },
+        {
+          "id": "hardDisks",
+          "label": "Hard disks",
+          "type": "int",
+          "default": 2,
+          "group": "Drives",
+          "help": "In the internal cage — 26 mm of height each.",
+          "min": 0,
+          "max": 6,
+          "step": 1
+        },
+        {
+          "id": "ssd",
+          "label": "Solid state drive",
+          "type": "boolean",
+          "default": false,
+          "group": "Drives",
+          "help": "A 2½\" drive on a bracket. The late fitment."
+        },
+        {
+          "id": "frontFan",
+          "label": "Front fan",
+          "type": "boolean",
+          "default": true,
+          "group": "Cooling"
+        },
+        {
+          "id": "rearFan",
+          "label": "Rear fan",
+          "type": "boolean",
+          "default": true,
+          "group": "Cooling"
+        },
+        {
+          "id": "topFan",
+          "label": "Top fan",
+          "type": "boolean",
+          "default": false,
+          "group": "Cooling"
+        },
+        {
+          "id": "fanSize",
+          "label": "Fan size",
+          "type": "number",
+          "default": 120,
+          "group": "Cooling",
+          "unit": "mm",
+          "min": 80,
+          "max": 140,
+          "step": 20
+        },
+        {
+          "id": "finish",
+          "label": "Finish",
+          "type": "select",
+          "default": "black",
+          "group": "Case",
+          "options": [
+            {
+              "value": "black",
+              "label": "Black"
+            },
+            {
+              "value": "gunmetal",
+              "label": "Gunmetal"
+            },
+            {
+              "value": "silver",
+              "label": "Silver"
+            },
+            {
+              "value": "red",
+              "label": "Black with red trim"
+            }
+          ]
+        },
+        {
+          "id": "window",
+          "label": "Windowed side panel",
+          "type": "boolean",
+          "default": true,
+          "group": "Case",
+          "conditional": true
+        },
+        {
+          "id": "frontMesh",
+          "label": "Mesh front",
+          "type": "boolean",
+          "default": true,
+          "group": "Case"
+        },
+        {
+          "id": "frontPorts",
+          "label": "Ports on the front",
+          "type": "boolean",
+          "default": true,
+          "group": "Case"
+        },
+        {
+          "id": "display",
+          "label": "Monitor",
+          "type": "select",
+          "default": "wide22",
+          "group": "Desk",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "crt19",
+              "label": "19″ tube — the last of them"
+            },
+            {
+              "value": "wide19",
+              "label": "19″ flat panel"
+            },
+            {
+              "value": "wide22",
+              "label": "22″ widescreen panel"
+            },
+            {
+              "value": "wide27",
+              "label": "27″ widescreen panel"
+            }
+          ]
+        },
+        {
+          "id": "screenOn",
+          "label": "Switched on",
+          "type": "boolean",
+          "default": false,
+          "group": "Desk",
+          "conditional": true
+        },
+        {
+          "id": "keyboard",
+          "label": "Keyboard and mouse",
+          "type": "boolean",
+          "default": true,
+          "group": "Desk"
+        }
+      ],
+      "presets": [
+        {
+          "name": "2003 first build",
+          "params": {
+            "board": "atx",
+            "graphicsCard": true,
+            "cards": 2,
+            "bays525": 3,
+            "optical": 2,
+            "cardReader": false,
+            "hardDisks": 1,
+            "finish": "silver",
+            "window": false,
+            "frontMesh": false,
+            "frontPorts": false,
+            "frontFan": true,
+            "rearFan": true,
+            "fanSize": 80,
+            "display": "crt19",
+            "keyboard": true
+          }
+        },
+        {
+          "name": "2006 windowed rig",
+          "params": {
+            "board": "atx",
+            "graphicsCard": true,
+            "cards": 1,
+            "bays525": 2,
+            "optical": 1,
+            "fanController": true,
+            "cardReader": true,
+            "hardDisks": 2,
+            "finish": "black",
+            "window": true,
+            "frontMesh": true,
+            "frontPorts": true,
+            "frontFan": true,
+            "rearFan": true,
+            "topFan": true,
+            "fanSize": 120,
+            "display": "wide22",
+            "screenOn": true,
+            "keyboard": true
+          }
+        },
+        {
+          "name": "2009 quiet build, open",
+          "params": {
+            "board": "atx",
+            "graphicsCard": true,
+            "cards": 0,
+            "bays525": 2,
+            "optical": 1,
+            "cardReader": true,
+            "hardDisks": 3,
+            "ssd": false,
+            "finish": "gunmetal",
+            "cutaway": true,
+            "frontMesh": true,
+            "frontFan": true,
+            "rearFan": true,
+            "fanSize": 140,
+            "display": "none",
+            "keyboard": false
+          }
+        },
+        {
+          "name": "2011 small form factor",
+          "params": {
+            "board": "microAtx",
+            "graphicsCard": true,
+            "cards": 0,
+            "bays525": 1,
+            "optical": 1,
+            "cardReader": true,
+            "hardDisks": 1,
+            "ssd": true,
+            "finish": "black",
+            "window": false,
+            "frontMesh": true,
+            "frontPorts": true,
+            "frontFan": true,
+            "rearFan": true,
+            "fanSize": 120,
+            "display": "wide22",
+            "keyboard": true
+          }
+        },
+        {
+          "name": "2012 red-trim tower",
+          "params": {
+            "board": "atx",
+            "graphicsCard": true,
+            "cards": 2,
+            "bays525": 3,
+            "optical": 1,
+            "fanController": true,
+            "cardReader": true,
+            "hardDisks": 4,
+            "ssd": true,
+            "finish": "red",
+            "window": true,
+            "frontMesh": true,
+            "frontPorts": true,
+            "frontFan": true,
+            "rearFan": true,
+            "topFan": true,
+            "fanSize": 140,
+            "display": "wide27",
+            "screenOn": true,
+            "keyboard": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "home-micro",
+      "name": "Home micro",
+      "description": "The 1977–85 wedge with the keyboard built in — sized by its key pitch and layout, with a cassette deck, cartridge slot and edge connector rather than bays and cards.",
+      "doc": "home-micro.md",
+      "source": "home-micro.js",
+      "params": [
+        {
+          "id": "keyStyle",
+          "label": "Keys",
+          "type": "select",
+          "default": "chiclet",
+          "group": "Keyboard",
+          "options": [
+            {
+              "value": "calculator",
+              "label": "Calculator — small square caps"
+            },
+            {
+              "value": "chiclet",
+              "label": "Chiclet — flat rounded caps in a sea of plastic"
+            },
+            {
+              "value": "rubber",
+              "label": "Rubber — one moulded mat, dead to the touch"
+            },
+            {
+              "value": "typewriter",
+              "label": "Typewriter — full travel, sculpted rows"
+            }
+          ]
+        },
+        {
+          "id": "columns",
+          "label": "Columns",
+          "type": "int",
+          "default": 15,
+          "group": "Keyboard",
+          "help": "Keys across the main block. Ten was a calculator; fifteen took a full alphabet row.",
+          "min": 10,
+          "max": 20,
+          "step": 1
+        },
+        {
+          "id": "rows",
+          "label": "Rows",
+          "type": "int",
+          "default": 5,
+          "group": "Keyboard",
+          "min": 3,
+          "max": 6,
+          "step": 1
+        },
+        {
+          "id": "pitch",
+          "label": "Key pitch",
+          "type": "number",
+          "default": 17.5,
+          "group": "Keyboard",
+          "help": "Centre to centre. A typewriter is 19.05; below about 16 you are hunting and pecking.",
+          "unit": "mm",
+          "min": 12,
+          "max": 20,
+          "step": 0.05
+        },
+        {
+          "id": "keypad",
+          "label": "Numeric keypad",
+          "type": "boolean",
+          "default": false,
+          "group": "Keyboard",
+          "help": "Four more columns on the right, and a wider case to hold them."
+        },
+        {
+          "id": "keyColour",
+          "label": "Key colour",
+          "type": "select",
+          "default": "matching",
+          "group": "Keyboard",
+          "options": [
+            {
+              "value": "matching",
+              "label": "Matching the case"
+            },
+            {
+              "value": "dark",
+              "label": "Dark"
+            },
+            {
+              "value": "light",
+              "label": "Light"
+            },
+            {
+              "value": "grey",
+              "label": "Grey"
+            }
+          ]
+        },
+        {
+          "id": "margin",
+          "label": "Moulding around the keys",
+          "type": "number",
+          "default": 26,
+          "group": "Case",
+          "help": "Plastic between the key block and the edge of the case.",
+          "unit": "mm",
+          "min": 8,
+          "max": 90,
+          "step": 1
+        },
+        {
+          "id": "lip",
+          "label": "Front lip height",
+          "type": "number",
+          "default": 26,
+          "group": "Case",
+          "help": "How thick the case is at the front edge, where your wrists rest.",
+          "unit": "mm",
+          "min": 12,
+          "max": 70,
+          "step": 1
+        },
+        {
+          "id": "slope",
+          "label": "Slope",
+          "type": "number",
+          "default": 9,
+          "group": "Case",
+          "help": "The rake of the top. The back is as tall as this makes it.",
+          "unit": "°",
+          "min": 0,
+          "max": 22,
+          "step": 0.5
+        },
+        {
+          "id": "radius",
+          "label": "Corner radius",
+          "type": "number",
+          "default": 16,
+          "group": "Case",
+          "unit": "mm",
+          "min": 0,
+          "max": 60,
+          "step": 1
+        },
+        {
+          "id": "finish",
+          "label": "Finish",
+          "type": "select",
+          "default": "cream",
+          "group": "Case",
+          "options": [
+            {
+              "value": "cream",
+              "label": "Cream"
+            },
+            {
+              "value": "beige",
+              "label": "Beige"
+            },
+            {
+              "value": "brown",
+              "label": "Brown"
+            },
+            {
+              "value": "charcoal",
+              "label": "Charcoal"
+            }
+          ]
+        },
+        {
+          "id": "ribs",
+          "label": "Moulded ribs",
+          "type": "boolean",
+          "default": true,
+          "group": "Case",
+          "help": "The ridges across the back of the top, hiding the vents and stiffening the lid."
+        },
+        {
+          "id": "badge",
+          "label": "Badge",
+          "type": "boolean",
+          "default": true,
+          "group": "Case"
+        },
+        {
+          "id": "cassette",
+          "label": "Cassette",
+          "type": "select",
+          "default": "port",
+          "group": "Storage",
+          "help": "Tape was the storage. Either a deck moulded into the case or a socket for one on a lead.",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "port",
+              "label": "Socket at the back for a deck on a lead"
+            },
+            {
+              "value": "deck",
+              "label": "Deck built into the right of the case"
+            }
+          ]
+        },
+        {
+          "id": "cartridge",
+          "label": "Cartridge slot",
+          "type": "boolean",
+          "default": true,
+          "group": "Storage",
+          "help": "A letterbox in the back for a ROM cartridge."
+        },
+        {
+          "id": "edgeConnector",
+          "label": "Expansion edge connector",
+          "type": "boolean",
+          "default": true,
+          "group": "Back",
+          "help": "The bare fingers of the board, brought out through a slot. Everything hung off this."
+        },
+        {
+          "id": "joystickPorts",
+          "label": "Joystick ports",
+          "type": "int",
+          "default": 2,
+          "group": "Back",
+          "min": 0,
+          "max": 2,
+          "step": 1
+        },
+        {
+          "id": "videoOut",
+          "label": "Video out",
+          "type": "select",
+          "default": "rf",
+          "group": "Back",
+          "options": [
+            {
+              "value": "rf",
+              "label": "Aerial socket — tune the television in"
+            },
+            {
+              "value": "composite",
+              "label": "Composite, for a monitor"
+            },
+            {
+              "value": "both",
+              "label": "Both"
+            }
+          ]
+        }
+      ],
+      "presets": [
+        {
+          "name": "Chiclet micro",
+          "params": {
+            "keyStyle": "chiclet",
+            "columns": 13,
+            "rows": 4,
+            "pitch": 16,
+            "keypad": false,
+            "margin": 30,
+            "lip": 24,
+            "slope": 8,
+            "radius": 18,
+            "finish": "cream",
+            "cassette": "port",
+            "cartridge": true,
+            "edgeConnector": true,
+            "joystickPorts": 2,
+            "videoOut": "rf",
+            "ribs": true
+          }
+        },
+        {
+          "name": "Rubber-key micro",
+          "params": {
+            "keyStyle": "rubber",
+            "columns": 10,
+            "rows": 4,
+            "pitch": 17,
+            "keypad": false,
+            "margin": 22,
+            "lip": 20,
+            "slope": 6,
+            "radius": 12,
+            "finish": "charcoal",
+            "keyColour": "grey",
+            "cassette": "port",
+            "cartridge": false,
+            "edgeConnector": true,
+            "joystickPorts": 0,
+            "videoOut": "rf",
+            "ribs": false
+          }
+        },
+        {
+          "name": "Cartridge micro",
+          "params": {
+            "keyStyle": "typewriter",
+            "columns": 15,
+            "rows": 5,
+            "pitch": 17.5,
+            "keypad": false,
+            "margin": 26,
+            "lip": 26,
+            "slope": 9,
+            "radius": 16,
+            "finish": "beige",
+            "cassette": "port",
+            "cartridge": true,
+            "edgeConnector": true,
+            "joystickPorts": 2,
+            "videoOut": "both",
+            "ribs": true
+          }
+        },
+        {
+          "name": "Built-in tape micro",
+          "params": {
+            "keyStyle": "typewriter",
+            "columns": 15,
+            "rows": 5,
+            "pitch": 18,
+            "keypad": false,
+            "margin": 24,
+            "lip": 28,
+            "slope": 10,
+            "radius": 14,
+            "finish": "brown",
+            "keyColour": "light",
+            "cassette": "deck",
+            "cartridge": false,
+            "edgeConnector": true,
+            "joystickPorts": 1,
+            "videoOut": "composite",
+            "ribs": true
+          }
+        },
+        {
+          "name": "Business-minded micro",
+          "params": {
+            "keyStyle": "typewriter",
+            "columns": 17,
+            "rows": 6,
+            "pitch": 19.05,
+            "keypad": true,
+            "margin": 34,
+            "lip": 30,
+            "slope": 11,
+            "radius": 10,
+            "finish": "beige",
+            "keyColour": "light",
+            "cassette": "port",
+            "cartridge": false,
+            "edgeConnector": true,
+            "joystickPorts": 0,
+            "videoOut": "composite",
+            "ribs": false,
+            "badge": true
+          }
+        },
+        {
+          "name": "Calculator micro",
+          "params": {
+            "keyStyle": "calculator",
+            "columns": 10,
+            "rows": 3,
+            "pitch": 13,
+            "keypad": false,
+            "margin": 16,
+            "lip": 18,
+            "slope": 5,
+            "radius": 10,
+            "finish": "charcoal",
+            "keyColour": "light",
+            "cassette": "port",
+            "cartridge": false,
+            "edgeConnector": true,
+            "joystickPorts": 0,
+            "videoOut": "rf",
+            "ribs": false,
+            "badge": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "integrated-micro",
+      "name": "Integrated micro",
+      "description": "The 1977–83 all-in-one — a tube, a case moulded around it, and the tape deck or twin floppies built into the same box. Sized by the tube it was built around.",
+      "doc": "integrated-micro.md",
+      "source": "integrated-micro.js",
+      "params": [
+        {
+          "id": "tube",
+          "label": "Tube",
+          "type": "number",
+          "default": 9,
+          "group": "Tube",
+          "help": "Diagonal. Nine inches was the usual; twelve made a much bigger box.",
+          "unit": "″",
+          "min": 5,
+          "max": 15,
+          "step": 0.5
+        },
+        {
+          "id": "phosphor",
+          "label": "Phosphor",
+          "type": "select",
+          "default": "green",
+          "group": "Tube",
+          "options": [
+            {
+              "value": "green",
+              "label": "Green — P1, the common one"
+            },
+            {
+              "value": "amber",
+              "label": "Amber — easier on the eyes, said the adverts"
+            },
+            {
+              "value": "white",
+              "label": "White — for the ones that drove a television tube"
+            },
+            {
+              "value": "blue",
+              "label": "Blue"
+            }
+          ]
+        },
+        {
+          "id": "screenOn",
+          "label": "Switched on",
+          "type": "boolean",
+          "default": true,
+          "group": "Tube"
+        },
+        {
+          "id": "hood",
+          "label": "Screen hood",
+          "type": "boolean",
+          "default": true,
+          "group": "Tube",
+          "help": "The brow moulded over the tube to keep the strip lights off it."
+        },
+        {
+          "id": "tilt",
+          "label": "Screen tilt",
+          "type": "number",
+          "default": 6,
+          "group": "Tube",
+          "help": "How far the screen face leans back.",
+          "unit": "°",
+          "min": 0,
+          "max": 16,
+          "step": 0.5
+        },
+        {
+          "id": "margin",
+          "label": "Moulding around the tube",
+          "type": "number",
+          "default": 62,
+          "group": "Case",
+          "unit": "mm",
+          "min": 20,
+          "max": 140,
+          "step": 2
+        },
+        {
+          "id": "radius",
+          "label": "Corner radius",
+          "type": "number",
+          "default": 22,
+          "group": "Case",
+          "unit": "mm",
+          "min": 0,
+          "max": 70,
+          "step": 1
+        },
+        {
+          "id": "finish",
+          "label": "Finish",
+          "type": "select",
+          "default": "cream",
+          "group": "Case",
+          "options": [
+            {
+              "value": "cream",
+              "label": "Cream"
+            },
+            {
+              "value": "beige",
+              "label": "Beige"
+            },
+            {
+              "value": "putty",
+              "label": "Putty"
+            },
+            {
+              "value": "steel",
+              "label": "Pressed steel"
+            },
+            {
+              "value": "charcoal",
+              "label": "Charcoal"
+            }
+          ]
+        },
+        {
+          "id": "vents",
+          "label": "Vent slots",
+          "type": "boolean",
+          "default": true,
+          "group": "Case",
+          "help": "Down the sides and across the back, because the tube ran hot."
+        },
+        {
+          "id": "storage",
+          "label": "Built-in storage",
+          "type": "select",
+          "default": "cassette",
+          "group": "Storage",
+          "help": "What was moulded into the case beside or below the tube.",
+          "options": [
+            {
+              "value": "none",
+              "label": "None — a port at the back and nothing else"
+            },
+            {
+              "value": "cassette",
+              "label": "Cassette deck"
+            },
+            {
+              "value": "floppy",
+              "label": "Floppy drives"
+            }
+          ]
+        },
+        {
+          "id": "floppies",
+          "label": "5¼\" drives",
+          "type": "int",
+          "default": 2,
+          "group": "Storage",
+          "min": 1,
+          "max": 2,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "drivePlace",
+          "label": "Where they sit",
+          "type": "select",
+          "default": "beside",
+          "group": "Storage",
+          "options": [
+            {
+              "value": "beside",
+              "label": "Beside the tube"
+            },
+            {
+              "value": "below",
+              "label": "Below the tube, across the front"
+            }
+          ],
+          "conditional": true
+        },
+        {
+          "id": "keyboard",
+          "label": "Keyboard",
+          "type": "select",
+          "default": "shelf",
+          "group": "Keyboard",
+          "options": [
+            {
+              "value": "shelf",
+              "label": "Built into a shelf on the front"
+            },
+            {
+              "value": "separate",
+              "label": "Separate, on a lead"
+            },
+            {
+              "value": "none",
+              "label": "None"
+            }
+          ]
+        },
+        {
+          "id": "keyColumns",
+          "label": "Columns",
+          "type": "int",
+          "default": 15,
+          "group": "Keyboard",
+          "min": 10,
+          "max": 20,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "keyPitch",
+          "label": "Key pitch",
+          "type": "number",
+          "default": 17.5,
+          "group": "Keyboard",
+          "unit": "mm",
+          "min": 12,
+          "max": 20,
+          "step": 0.05,
+          "conditional": true
+        },
+        {
+          "id": "keypad",
+          "label": "Numeric keypad",
+          "type": "boolean",
+          "default": true,
+          "group": "Keyboard",
+          "conditional": true
+        },
+        {
+          "id": "parallelPort",
+          "label": "Parallel port for a printer",
+          "type": "boolean",
+          "default": true,
+          "group": "Back"
+        },
+        {
+          "id": "expansionPort",
+          "label": "Expansion port for a disk unit",
+          "type": "boolean",
+          "default": true,
+          "group": "Back"
+        }
+      ],
+      "presets": [
+        {
+          "name": "Green-screen trinity",
+          "params": {
+            "tube": 9,
+            "phosphor": "green",
+            "screenOn": true,
+            "margin": 62,
+            "radius": 22,
+            "finish": "cream",
+            "storage": "cassette",
+            "drivePlace": "beside",
+            "keyboard": "shelf",
+            "keyColumns": 15,
+            "keyPitch": 16,
+            "keypad": true,
+            "hood": true,
+            "tilt": 5
+          }
+        },
+        {
+          "name": "Twin-floppy business micro",
+          "params": {
+            "tube": 12,
+            "phosphor": "green",
+            "screenOn": true,
+            "margin": 70,
+            "radius": 18,
+            "finish": "beige",
+            "storage": "floppy",
+            "floppies": 2,
+            "drivePlace": "beside",
+            "keyboard": "separate",
+            "keyColumns": 17,
+            "keyPitch": 19.05,
+            "keypad": true,
+            "hood": true,
+            "tilt": 4
+          }
+        },
+        {
+          "name": "Amber office terminal",
+          "params": {
+            "tube": 12,
+            "phosphor": "amber",
+            "screenOn": true,
+            "margin": 56,
+            "radius": 26,
+            "finish": "putty",
+            "storage": "floppy",
+            "floppies": 2,
+            "drivePlace": "below",
+            "keyboard": "separate",
+            "keyColumns": 17,
+            "keyPitch": 19.05,
+            "keypad": true,
+            "hood": false,
+            "tilt": 8
+          }
+        },
+        {
+          "name": "Pressed-steel micro",
+          "params": {
+            "tube": 9,
+            "phosphor": "white",
+            "screenOn": false,
+            "margin": 44,
+            "radius": 8,
+            "finish": "steel",
+            "storage": "cassette",
+            "drivePlace": "below",
+            "keyboard": "shelf",
+            "keyColumns": 13,
+            "keyPitch": 17.5,
+            "keypad": false,
+            "hood": false,
+            "tilt": 0,
+            "vents": true
+          }
+        },
+        {
+          "name": "Small classroom micro",
+          "params": {
+            "tube": 7,
+            "phosphor": "green",
+            "screenOn": true,
+            "margin": 40,
+            "radius": 20,
+            "finish": "cream",
+            "storage": "none",
+            "keyboard": "shelf",
+            "keyColumns": 12,
+            "keyPitch": 15,
+            "keypad": false,
+            "hood": true,
+            "tilt": 6,
+            "parallelPort": false,
+            "expansionPort": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "multimedia-pc",
+      "name": "Multimedia PC",
+      "description": "The 1995–2001 beige mini tower — sized from its board and bays, with a CD-ROM, a floppy, ISA and PCI cards side by side, and the speakers it was sold with.",
+      "doc": "multimedia-pc.md",
+      "source": "multimedia-pc.js",
+      "params": [
+        {
+          "id": "board",
+          "label": "Board",
+          "type": "select",
+          "default": "atx",
+          "group": "Board",
+          "help": "Sets the footprint, how tall the case has to be, and how many slots there are to fill.",
+          "options": [
+            {
+              "value": "babyAt",
+              "label": "Baby-AT — 216 × 330 mm, on its way out"
+            },
+            {
+              "value": "atx",
+              "label": "ATX — 305 × 244 mm, ports in a block at the back"
+            },
+            {
+              "value": "microAtx",
+              "label": "microATX — 244 × 244 mm"
+            }
+          ]
+        },
+        {
+          "id": "isaCards",
+          "label": "ISA cards",
+          "type": "int",
+          "default": 1,
+          "group": "Board",
+          "help": "The sound card usually, and a modem if it was old enough.",
+          "min": 0,
+          "max": 4,
+          "step": 1
+        },
+        {
+          "id": "pciCards",
+          "label": "PCI cards",
+          "type": "int",
+          "default": 2,
+          "group": "Board",
+          "help": "Graphics, network, SCSI, or the sound card once it moved over.",
+          "min": 0,
+          "max": 5,
+          "step": 1
+        },
+        {
+          "id": "cutaway",
+          "label": "Side panel off",
+          "type": "boolean",
+          "default": false,
+          "group": "Board",
+          "help": "Builds the board, the cards, the drive cage and the supply."
+        },
+        {
+          "id": "bays525",
+          "label": "5¼\" openings",
+          "type": "int",
+          "default": 2,
+          "group": "Drives",
+          "help": "Each one is 41.3 mm of case height.",
+          "min": 1,
+          "max": 4,
+          "step": 1
+        },
+        {
+          "id": "optical",
+          "label": "CD-ROM drives",
+          "type": "int",
+          "default": 1,
+          "group": "Drives",
+          "min": 0,
+          "max": 2,
+          "step": 1
+        },
+        {
+          "id": "tapeDrive",
+          "label": "Tape or Zip drive",
+          "type": "boolean",
+          "default": false,
+          "group": "Drives"
+        },
+        {
+          "id": "bays35",
+          "label": "3½\" openings",
+          "type": "int",
+          "default": 1,
+          "group": "Drives",
+          "help": "25.4 mm each. The floppy went in one of these.",
+          "min": 0,
+          "max": 2,
+          "step": 1
+        },
+        {
+          "id": "floppy",
+          "label": "Floppy drive",
+          "type": "boolean",
+          "default": true,
+          "group": "Drives"
+        },
+        {
+          "id": "hardDisks",
+          "label": "Hard disks",
+          "type": "int",
+          "default": 1,
+          "group": "Drives",
+          "help": "In the internal cage, which adds 26 mm of height each.",
+          "min": 0,
+          "max": 3,
+          "step": 1
+        },
+        {
+          "id": "finish",
+          "label": "Finish",
+          "type": "select",
+          "default": "beige",
+          "group": "Case",
+          "options": [
+            {
+              "value": "beige",
+              "label": "Beige"
+            },
+            {
+              "value": "putty",
+              "label": "Putty"
+            },
+            {
+              "value": "white",
+              "label": "White, going yellow"
+            },
+            {
+              "value": "charcoal",
+              "label": "Charcoal"
+            }
+          ]
+        },
+        {
+          "id": "resetButton",
+          "label": "Reset button",
+          "type": "boolean",
+          "default": true,
+          "group": "Case"
+        },
+        {
+          "id": "badge",
+          "label": "Badge",
+          "type": "boolean",
+          "default": true,
+          "group": "Case"
+        },
+        {
+          "id": "feet",
+          "label": "Feet",
+          "type": "boolean",
+          "default": true,
+          "group": "Case"
+        },
+        {
+          "id": "speakers",
+          "label": "Speakers",
+          "type": "boolean",
+          "default": true,
+          "group": "Desk",
+          "help": "The pair that came in the box, one either side of the monitor."
+        },
+        {
+          "id": "display",
+          "label": "Monitor",
+          "type": "select",
+          "default": "crt15",
+          "group": "Desk",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "crt14",
+              "label": "14″ tube"
+            },
+            {
+              "value": "crt15",
+              "label": "15″ tube"
+            },
+            {
+              "value": "crt17",
+              "label": "17″ tube"
+            }
+          ]
+        },
+        {
+          "id": "screenOn",
+          "label": "Switched on",
+          "type": "boolean",
+          "default": false,
+          "group": "Desk",
+          "conditional": true
+        },
+        {
+          "id": "keyboard",
+          "label": "Keyboard and mouse",
+          "type": "boolean",
+          "default": true,
+          "group": "Desk"
+        }
+      ],
+      "presets": [
+        {
+          "name": "1995 multimedia bundle",
+          "params": {
+            "board": "babyAt",
+            "isaCards": 2,
+            "pciCards": 1,
+            "bays525": 2,
+            "optical": 1,
+            "bays35": 1,
+            "floppy": true,
+            "hardDisks": 1,
+            "finish": "beige",
+            "speakers": true,
+            "display": "crt14",
+            "keyboard": true,
+            "resetButton": true
+          }
+        },
+        {
+          "name": "1997 office ATX",
+          "params": {
+            "board": "atx",
+            "isaCards": 1,
+            "pciCards": 2,
+            "bays525": 2,
+            "optical": 1,
+            "bays35": 1,
+            "floppy": true,
+            "hardDisks": 1,
+            "finish": "putty",
+            "speakers": false,
+            "display": "crt15",
+            "keyboard": true
+          }
+        },
+        {
+          "name": "1999 CD-burner tower",
+          "params": {
+            "board": "atx",
+            "isaCards": 1,
+            "pciCards": 4,
+            "bays525": 3,
+            "optical": 2,
+            "tapeDrive": false,
+            "bays35": 1,
+            "floppy": true,
+            "hardDisks": 2,
+            "finish": "white",
+            "speakers": true,
+            "display": "crt17",
+            "screenOn": true,
+            "keyboard": true
+          }
+        },
+        {
+          "name": "2000 small footprint",
+          "params": {
+            "board": "microAtx",
+            "isaCards": 0,
+            "pciCards": 2,
+            "bays525": 1,
+            "optical": 1,
+            "bays35": 1,
+            "floppy": true,
+            "hardDisks": 1,
+            "finish": "putty",
+            "speakers": false,
+            "display": "crt15",
+            "keyboard": true,
+            "badge": false
+          }
+        },
+        {
+          "name": "1998 workshop machine, open",
+          "params": {
+            "board": "atx",
+            "isaCards": 2,
+            "pciCards": 3,
+            "bays525": 3,
+            "optical": 1,
+            "tapeDrive": true,
+            "bays35": 2,
+            "floppy": true,
+            "hardDisks": 3,
+            "finish": "beige",
+            "cutaway": true,
+            "speakers": false,
+            "display": "none",
+            "keyboard": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "notebook",
+      "name": "Notebook",
+      "description": "The 1995–2008 clamshell — sized by its panel and its keyboard, with a swappable drive bay, a PC Card slot and a battery under the back rather than bays and cards.",
+      "doc": "notebook.md",
+      "source": "notebook.js",
+      "params": [
+        {
+          "id": "panel",
+          "label": "Panel",
+          "type": "number",
+          "default": 14.1,
+          "group": "Panel",
+          "help": "Diagonal. This is what the width of the machine comes from.",
+          "unit": "″",
+          "min": 8,
+          "max": 17,
+          "step": 0.1
+        },
+        {
+          "id": "aspect",
+          "label": "Shape",
+          "type": "select",
+          "default": "fourThree",
+          "group": "Panel",
+          "options": [
+            {
+              "value": "fourThree",
+              "label": "4:3 — square-ish, the early one"
+            },
+            {
+              "value": "sixteenTen",
+              "label": "16:10"
+            },
+            {
+              "value": "sixteenNine",
+              "label": "16:9 — once panels came off television lines"
+            }
+          ]
+        },
+        {
+          "id": "lidBezel",
+          "label": "Lid bezel",
+          "type": "number",
+          "default": 20,
+          "group": "Panel",
+          "unit": "mm",
+          "min": 8,
+          "max": 40,
+          "step": 1
+        },
+        {
+          "id": "lidAngle",
+          "label": "Lid angle",
+          "type": "number",
+          "default": 105,
+          "group": "Panel",
+          "unit": "°",
+          "min": 0,
+          "max": 135,
+          "step": 1
+        },
+        {
+          "id": "screenOn",
+          "label": "Switched on",
+          "type": "boolean",
+          "default": true,
+          "group": "Panel"
+        },
+        {
+          "id": "latch",
+          "label": "Lid latch",
+          "type": "boolean",
+          "default": true,
+          "group": "Panel",
+          "help": "The catch and the button that let it go. Later ones did without."
+        },
+        {
+          "id": "keyPitch",
+          "label": "Key pitch",
+          "type": "number",
+          "default": 19.05,
+          "group": "Keyboard",
+          "help": "Full size is 19.05. Sub-notebooks went down to 16 and you noticed.",
+          "unit": "mm",
+          "min": 14,
+          "max": 19.05,
+          "step": 0.05
+        },
+        {
+          "id": "keyRows",
+          "label": "Rows",
+          "type": "int",
+          "default": 6,
+          "group": "Keyboard",
+          "min": 5,
+          "max": 6,
+          "step": 1
+        },
+        {
+          "id": "pointing",
+          "label": "Pointing device",
+          "type": "select",
+          "default": "trackpad",
+          "group": "Keyboard",
+          "options": [
+            {
+              "value": "trackball",
+              "label": "Trackball — under the space bar"
+            },
+            {
+              "value": "stick",
+              "label": "Pointing stick — between G, H and B"
+            },
+            {
+              "value": "trackpad",
+              "label": "Trackpad"
+            },
+            {
+              "value": "both",
+              "label": "Stick and trackpad"
+            }
+          ]
+        },
+        {
+          "id": "palmrest",
+          "label": "Palm rest",
+          "type": "number",
+          "default": 52,
+          "group": "Keyboard",
+          "help": "How much deck there is in front of the keys. This is most of the depth of the machine.",
+          "unit": "mm",
+          "min": 0,
+          "max": 90,
+          "step": 1
+        },
+        {
+          "id": "bay",
+          "label": "Swappable bay",
+          "type": "select",
+          "default": "dvd",
+          "group": "Bay",
+          "help": "One bay in the side, and you carried whatever else you needed in the bag.",
+          "options": [
+            {
+              "value": "none",
+              "label": "Empty — a blanking plate"
+            },
+            {
+              "value": "floppy",
+              "label": "Floppy drive"
+            },
+            {
+              "value": "cd",
+              "label": "CD-ROM"
+            },
+            {
+              "value": "dvd",
+              "label": "DVD"
+            },
+            {
+              "value": "battery",
+              "label": "A second battery"
+            }
+          ]
+        },
+        {
+          "id": "batteryBulge",
+          "label": "Battery under the back",
+          "type": "boolean",
+          "default": true,
+          "group": "Bay",
+          "help": "The cylinder pack that lifted the back of the machine and tilted the keyboard."
+        },
+        {
+          "id": "pcCard",
+          "label": "PC Card slot",
+          "type": "boolean",
+          "default": true,
+          "group": "Bay"
+        },
+        {
+          "id": "thickness",
+          "label": "Base thickness",
+          "type": "number",
+          "default": 38,
+          "group": "Bay",
+          "help": "A drive bay in the side needs about 30 mm of it.",
+          "unit": "mm",
+          "min": 18,
+          "max": 60,
+          "step": 1
+        },
+        {
+          "id": "finish",
+          "label": "Finish",
+          "type": "select",
+          "default": "charcoal",
+          "group": "Case",
+          "options": [
+            {
+              "value": "charcoal",
+              "label": "Charcoal"
+            },
+            {
+              "value": "graphite",
+              "label": "Graphite"
+            },
+            {
+              "value": "silver",
+              "label": "Silver"
+            },
+            {
+              "value": "magnesium",
+              "label": "Magnesium"
+            },
+            {
+              "value": "ivory",
+              "label": "Ivory, going yellow"
+            }
+          ]
+        },
+        {
+          "id": "radius",
+          "label": "Corner radius",
+          "type": "number",
+          "default": 8,
+          "group": "Case",
+          "unit": "mm",
+          "min": 0,
+          "max": 30,
+          "step": 1
+        },
+        {
+          "id": "statusPanel",
+          "label": "Status lamps",
+          "type": "boolean",
+          "default": true,
+          "group": "Case",
+          "help": "The little row of icons that told you the disk was busy."
+        },
+        {
+          "id": "speakers",
+          "label": "Speaker grilles",
+          "type": "boolean",
+          "default": true,
+          "group": "Case"
+        }
+      ],
+      "presets": [
+        {
+          "name": "1995 luggable",
+          "params": {
+            "panel": 10.4,
+            "aspect": "fourThree",
+            "lidBezel": 26,
+            "keyPitch": 18,
+            "keyRows": 6,
+            "pointing": "trackball",
+            "palmrest": 40,
+            "bay": "floppy",
+            "batteryBulge": true,
+            "pcCard": true,
+            "thickness": 55,
+            "finish": "ivory",
+            "radius": 6,
+            "lidAngle": 100
+          }
+        },
+        {
+          "name": "1999 business notebook",
+          "params": {
+            "panel": 13.3,
+            "aspect": "fourThree",
+            "lidBezel": 22,
+            "keyPitch": 19.05,
+            "keyRows": 6,
+            "pointing": "stick",
+            "palmrest": 48,
+            "bay": "cd",
+            "batteryBulge": true,
+            "pcCard": true,
+            "thickness": 44,
+            "finish": "charcoal",
+            "radius": 8,
+            "lidAngle": 105
+          }
+        },
+        {
+          "name": "2002 desktop replacement",
+          "params": {
+            "panel": 15.4,
+            "aspect": "sixteenTen",
+            "lidBezel": 20,
+            "keyPitch": 19.05,
+            "keyRows": 6,
+            "pointing": "both",
+            "palmrest": 60,
+            "bay": "dvd",
+            "batteryBulge": true,
+            "pcCard": true,
+            "thickness": 48,
+            "finish": "graphite",
+            "radius": 10,
+            "lidAngle": 110,
+            "screenOn": true
+          }
+        },
+        {
+          "name": "2004 thin and light",
+          "params": {
+            "panel": 12.1,
+            "aspect": "fourThree",
+            "lidBezel": 16,
+            "keyPitch": 17.5,
+            "keyRows": 6,
+            "pointing": "trackpad",
+            "palmrest": 44,
+            "bay": "none",
+            "batteryBulge": false,
+            "pcCard": true,
+            "thickness": 26,
+            "finish": "magnesium",
+            "radius": 6,
+            "lidAngle": 115
+          }
+        },
+        {
+          "name": "2007 consumer widescreen",
+          "params": {
+            "panel": 15.6,
+            "aspect": "sixteenNine",
+            "lidBezel": 18,
+            "keyPitch": 19.05,
+            "keyRows": 6,
+            "pointing": "trackpad",
+            "palmrest": 62,
+            "bay": "dvd",
+            "batteryBulge": false,
+            "pcCard": false,
+            "thickness": 34,
+            "finish": "silver",
+            "radius": 10,
+            "lidAngle": 105,
+            "screenOn": true
+          }
+        },
+        {
+          "name": "2006 sub-notebook",
+          "params": {
+            "panel": 10.6,
+            "aspect": "sixteenTen",
+            "lidBezel": 14,
+            "keyPitch": 16,
+            "keyRows": 5,
+            "pointing": "trackpad",
+            "palmrest": 34,
+            "bay": "none",
+            "batteryBulge": true,
+            "pcCard": true,
+            "thickness": 24,
+            "finish": "magnesium",
+            "radius": 5,
+            "lidAngle": 120
+          }
+        }
+      ]
+    },
+    {
+      "id": "rock",
+      "name": "Rock",
+      "description": "A stone from pebble to boulder — fracture planes worn down by erosion, sedimentary bedding, an optional geode split open on its crystals, and moss on whatever faces the sky.",
+      "doc": "rock.md",
+      "source": "rock.js",
+      "params": [
+        {
+          "id": "size",
+          "label": "Size",
+          "type": "number",
+          "default": 320,
+          "group": "Stone",
+          "help": "Longest axis. Under 64 is a pebble, over 256 a boulder.",
+          "unit": "mm",
+          "min": 15,
+          "max": 3000,
+          "step": 5
+        },
+        {
+          "id": "stone",
+          "label": "Stone",
+          "type": "select",
+          "default": "granite",
+          "group": "Stone",
+          "help": "Colour, density, and how the stuff breaks — flint into few sharp faces, sandstone into many blunt ones.",
+          "options": [
+            {
+              "value": "granite",
+              "label": "Granite"
+            },
+            {
+              "value": "basalt",
+              "label": "Basalt"
+            },
+            {
+              "value": "sandstone",
+              "label": "Sandstone"
+            },
+            {
+              "value": "limestone",
+              "label": "Limestone"
+            },
+            {
+              "value": "flint",
+              "label": "Flint"
+            },
+            {
+              "value": "slate",
+              "label": "Slate"
+            }
+          ]
+        },
+        {
+          "id": "seed",
+          "label": "Seed",
+          "type": "int",
+          "default": 7,
+          "group": "Stone",
+          "help": "Same seed, same stone.",
+          "min": 1,
+          "max": 9999,
+          "step": 1
+        },
+        {
+          "id": "detail",
+          "label": "Detail",
+          "type": "int",
+          "default": 6,
+          "group": "Stone",
+          "help": "How finely each face of the icosahedron it starts from is divided: 20 × (detail + 1)² faces, so six is 980 and twelve is 3,380.",
+          "min": 1,
+          "max": 12,
+          "step": 1
+        },
+        {
+          "id": "flatness",
+          "label": "Flatness",
+          "type": "number",
+          "default": 0.72,
+          "group": "Stone",
+          "help": "How squat it is. Few stones are round.",
+          "min": 0.25,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "id": "elongation",
+          "label": "Elongation",
+          "type": "number",
+          "default": 1.15,
+          "group": "Stone",
+          "help": "Stretched along one axis.",
+          "min": 0.5,
+          "max": 1.6,
+          "step": 0.01
+        },
+        {
+          "id": "erosion",
+          "label": "Erosion",
+          "type": "number",
+          "default": 0.35,
+          "group": "Erosion",
+          "help": "None is freshly fractured, all corners and flats. Full is river-tumbled: the corners go first and the fine detail with them.",
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "id": "lumpiness",
+          "label": "Lumpiness",
+          "type": "number",
+          "default": 0.4,
+          "group": "Erosion",
+          "help": "The slow swell of the surface.",
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "id": "pitting",
+          "label": "Pitting",
+          "type": "number",
+          "default": 0.35,
+          "group": "Erosion",
+          "help": "Fine roughness. Erosion wears this off first.",
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "id": "bedding",
+          "label": "Bedding",
+          "type": "number",
+          "default": 0,
+          "group": "Erosion",
+          "help": "Sedimentary layers, cut as ledges around the stone.",
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "id": "beds",
+          "label": "Beds",
+          "type": "int",
+          "default": 6,
+          "group": "Erosion",
+          "min": 2,
+          "max": 14,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "crack",
+          "label": "Cracked open",
+          "type": "number",
+          "default": 0,
+          "group": "Inside",
+          "help": "Splits it in two and opens the halves like a book. Nothing inside is built while it is shut.",
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "id": "geode",
+          "label": "Geode",
+          "type": "boolean",
+          "default": false,
+          "group": "Inside",
+          "help": "A hollow lined with crystals. You only find out by breaking it."
+        },
+        {
+          "id": "cavity",
+          "label": "Cavity",
+          "type": "number",
+          "default": 0.45,
+          "group": "Inside",
+          "help": "How much of the stone is hollow.",
+          "min": 0.15,
+          "max": 0.75,
+          "step": 0.01,
+          "conditional": true
+        },
+        {
+          "id": "crystalSize",
+          "label": "Crystal size",
+          "type": "number",
+          "default": 0.1,
+          "group": "Inside",
+          "help": "As a share of the cavity.",
+          "min": 0.02,
+          "max": 0.3,
+          "step": 0.005,
+          "conditional": true
+        },
+        {
+          "id": "crystals",
+          "label": "Crystal density",
+          "type": "number",
+          "default": 0.6,
+          "group": "Inside",
+          "min": 0,
+          "max": 1,
+          "step": 0.01,
+          "conditional": true
+        },
+        {
+          "id": "crystalColour",
+          "label": "Crystal",
+          "type": "select",
+          "default": "amethyst",
+          "group": "Inside",
+          "options": [
+            {
+              "value": "amethyst",
+              "label": "Amethyst"
+            },
+            {
+              "value": "quartz",
+              "label": "Quartz"
+            },
+            {
+              "value": "citrine",
+              "label": "Citrine"
+            },
+            {
+              "value": "rose",
+              "label": "Rose quartz"
+            },
+            {
+              "value": "smoky",
+              "label": "Smoky quartz"
+            },
+            {
+              "value": "emerald",
+              "label": "Green"
+            }
+          ],
+          "conditional": true
+        },
+        {
+          "id": "banding",
+          "label": "Banded lining",
+          "type": "boolean",
+          "default": true,
+          "group": "Inside",
+          "help": "The agate rings between the shell and the hollow, which is how a geode fills in.",
+          "conditional": true
+        },
+        {
+          "id": "moss",
+          "label": "Moss",
+          "type": "number",
+          "default": 0.3,
+          "group": "Moss",
+          "help": "How much of the stone it has taken. It only grows on what faces the sky.",
+          "min": 0,
+          "max": 1,
+          "step": 0.01
+        },
+        {
+          "id": "mossReach",
+          "label": "Down the sides",
+          "type": "number",
+          "default": 0.35,
+          "group": "Moss",
+          "help": "How far past the top it creeps.",
+          "min": 0,
+          "max": 1,
+          "step": 0.01,
+          "conditional": true
+        },
+        {
+          "id": "mossDepth",
+          "label": "Thickness",
+          "type": "number",
+          "default": 3,
+          "group": "Moss",
+          "unit": "mm",
+          "min": 0.5,
+          "max": 12,
+          "step": 0.5,
+          "conditional": true
+        },
+        {
+          "id": "mossColour",
+          "label": "Growth",
+          "type": "select",
+          "default": "moss",
+          "group": "Moss",
+          "options": [
+            {
+              "value": "moss",
+              "label": "Moss — green"
+            },
+            {
+              "value": "lichen",
+              "label": "Lichen — pale"
+            },
+            {
+              "value": "rust",
+              "label": "Lichen — rust"
+            },
+            {
+              "value": "grey",
+              "label": "Lichen — grey"
+            }
+          ],
+          "conditional": true
+        }
+      ],
+      "presets": [
+        {
+          "name": "River pebble",
+          "params": {
+            "size": 48,
+            "stone": "flint",
+            "seed": 12,
+            "detail": 3,
+            "flatness": 0.55,
+            "elongation": 1.3,
+            "erosion": 0.95,
+            "lumpiness": 0.25,
+            "pitting": 0.05,
+            "bedding": 0,
+            "moss": 0
+          }
+        },
+        {
+          "name": "Beach cobble",
+          "params": {
+            "size": 140,
+            "stone": "granite",
+            "seed": 44,
+            "detail": 3,
+            "flatness": 0.62,
+            "elongation": 1.15,
+            "erosion": 0.8,
+            "lumpiness": 0.35,
+            "pitting": 0.15,
+            "bedding": 0,
+            "moss": 0
+          }
+        },
+        {
+          "name": "Freshly split flint",
+          "params": {
+            "size": 120,
+            "stone": "flint",
+            "seed": 91,
+            "detail": 3,
+            "flatness": 0.8,
+            "elongation": 1.05,
+            "erosion": 0.02,
+            "lumpiness": 0.15,
+            "pitting": 0.1,
+            "bedding": 0,
+            "moss": 0
+          }
+        },
+        {
+          "name": "Mossy boulder",
+          "params": {
+            "size": 1100,
+            "stone": "granite",
+            "seed": 3,
+            "detail": 4,
+            "flatness": 0.72,
+            "elongation": 1.2,
+            "erosion": 0.45,
+            "lumpiness": 0.5,
+            "pitting": 0.4,
+            "bedding": 0,
+            "moss": 0.75,
+            "mossReach": 0.5,
+            "mossDepth": 8,
+            "mossColour": "moss"
+          }
+        },
+        {
+          "name": "Bedded sandstone block",
+          "params": {
+            "size": 700,
+            "stone": "sandstone",
+            "seed": 21,
+            "detail": 3,
+            "flatness": 0.85,
+            "elongation": 1.25,
+            "erosion": 0.2,
+            "lumpiness": 0.3,
+            "pitting": 0.3,
+            "bedding": 0.8,
+            "beds": 7,
+            "moss": 0.2,
+            "mossReach": 0.25,
+            "mossColour": "rust"
+          }
+        },
+        {
+          "name": "Amethyst geode, cracked",
+          "params": {
+            "size": 260,
+            "stone": "limestone",
+            "seed": 5,
+            "detail": 4,
+            "flatness": 0.8,
+            "elongation": 1.05,
+            "erosion": 0.6,
+            "lumpiness": 0.3,
+            "pitting": 0.2,
+            "crack": 1,
+            "geode": true,
+            "cavity": 0.55,
+            "crystalSize": 0.12,
+            "crystals": 0.7,
+            "crystalColour": "amethyst",
+            "banding": true,
+            "moss": 0
+          }
+        },
+        {
+          "name": "Geode, just opening",
+          "params": {
+            "size": 200,
+            "stone": "limestone",
+            "seed": 33,
+            "detail": 4,
+            "flatness": 0.86,
+            "elongation": 1,
+            "erosion": 0.7,
+            "lumpiness": 0.25,
+            "pitting": 0.15,
+            "crack": 0.28,
+            "geode": true,
+            "cavity": 0.5,
+            "crystalSize": 0.1,
+            "crystals": 0.55,
+            "crystalColour": "quartz",
+            "banding": true,
+            "moss": 0.1
+          }
+        },
+        {
+          "name": "Lichened slate",
+          "params": {
+            "size": 420,
+            "stone": "slate",
+            "seed": 66,
+            "detail": 3,
+            "flatness": 0.32,
+            "elongation": 1.45,
+            "erosion": 0.25,
+            "lumpiness": 0.25,
+            "pitting": 0.2,
+            "bedding": 0.45,
+            "beds": 11,
+            "moss": 0.4,
+            "mossReach": 0.2,
+            "mossDepth": 2,
+            "mossColour": "grey"
+          }
+        }
+      ]
+    },
+    {
+      "id": "shelf-unit",
+      "name": "Shelf unit",
+      "description": "A simple carcass with evenly spaced shelves, sharing the same ledge profiles as the stair treads.",
+      "doc": "shelf-unit.md",
+      "source": "shelf-unit.js",
+      "params": [
+        {
+          "id": "width",
+          "label": "Width",
+          "type": "number",
+          "default": 800,
+          "group": "Carcass",
+          "unit": "mm",
+          "min": 200,
+          "max": 2400,
+          "step": 10
+        },
+        {
+          "id": "height",
+          "label": "Height",
+          "type": "number",
+          "default": 1800,
+          "group": "Carcass",
+          "unit": "mm",
+          "min": 200,
+          "max": 2600,
+          "step": 10
+        },
+        {
+          "id": "depth",
+          "label": "Depth",
+          "type": "number",
+          "default": 320,
+          "group": "Carcass",
+          "unit": "mm",
+          "min": 100,
+          "max": 800,
+          "step": 5
+        },
+        {
+          "id": "shelves",
+          "label": "Intermediate shelves",
+          "type": "int",
+          "default": 4,
+          "group": "Carcass",
+          "min": 0,
+          "max": 12,
+          "step": 1
+        },
+        {
+          "id": "toeKick",
+          "label": "Toe kick height",
+          "type": "number",
+          "default": 80,
+          "group": "Carcass",
+          "unit": "mm",
+          "min": 0,
+          "max": 250,
+          "step": 5
+        },
+        {
+          "id": "shelfThickness",
+          "label": "Shelf thickness",
+          "type": "number",
+          "default": 22,
+          "group": "Boards",
+          "unit": "mm",
+          "min": 8,
+          "max": 80,
+          "step": 1
+        },
+        {
+          "id": "sideThickness",
+          "label": "Side thickness",
+          "type": "number",
+          "default": 22,
+          "group": "Boards",
+          "unit": "mm",
+          "min": 8,
+          "max": 80,
+          "step": 1
+        },
+        {
+          "id": "edgeStyle",
+          "label": "Front edge profile",
+          "type": "select",
+          "default": "bullnose",
+          "group": "Boards",
+          "options": [
+            {
+              "value": "square",
+              "label": "Square"
+            },
+            {
+              "value": "chamfer",
+              "label": "Chamfer"
+            },
+            {
+              "value": "rounded",
+              "label": "Round-over"
+            },
+            {
+              "value": "bullnose",
+              "label": "Bullnose"
+            },
+            {
+              "value": "cove",
+              "label": "Cove"
+            },
+            {
+              "value": "ogee",
+              "label": "Ogee"
+            }
+          ]
+        },
+        {
+          "id": "edgeSize",
+          "label": "Profile size",
+          "type": "number",
+          "default": 8,
+          "group": "Boards",
+          "unit": "mm",
+          "min": 0,
+          "max": 25,
+          "step": 0.5,
+          "conditional": true
+        },
+        {
+          "id": "back",
+          "label": "Back panel",
+          "type": "boolean",
+          "default": true,
+          "group": "Back"
+        },
+        {
+          "id": "backThickness",
+          "label": "Back thickness",
+          "type": "number",
+          "default": 9,
+          "group": "Back",
+          "unit": "mm",
+          "min": 3,
+          "max": 40,
+          "step": 1,
+          "conditional": true
+        }
+      ],
+      "presets": []
+    },
+    {
+      "id": "spiral-staircase",
+      "name": "Spiral staircase",
+      "description": "Wedge treads winding around a central column, with an optional helical handrail. The ledge profile wraps the full tread outline.",
+      "doc": "spiral-staircase.md",
+      "source": "spiral-staircase.js",
+      "params": [
+        {
+          "id": "outerRadius",
+          "label": "Outer radius",
+          "type": "number",
+          "default": 750,
+          "group": "Flight",
+          "unit": "mm",
+          "min": 300,
+          "max": 2000,
+          "step": 10
+        },
+        {
+          "id": "totalRise",
+          "label": "Floor-to-floor rise",
+          "type": "number",
+          "default": 2700,
+          "group": "Flight",
+          "unit": "mm",
+          "min": 300,
+          "max": 5000,
+          "step": 10
+        },
+        {
+          "id": "steps",
+          "label": "Number of steps",
+          "type": "int",
+          "default": 14,
+          "group": "Flight",
+          "min": 3,
+          "max": 40,
+          "step": 1
+        },
+        {
+          "id": "sweep",
+          "label": "Total rotation",
+          "type": "number",
+          "default": 360,
+          "group": "Flight",
+          "unit": "°",
+          "min": 90,
+          "max": 1080,
+          "step": 5
+        },
+        {
+          "id": "direction",
+          "label": "Direction",
+          "type": "select",
+          "default": "cw",
+          "group": "Flight",
+          "options": [
+            {
+              "value": "cw",
+              "label": "Clockwise up"
+            },
+            {
+              "value": "ccw",
+              "label": "Counter-clockwise up"
+            }
+          ]
+        },
+        {
+          "id": "treadThickness",
+          "label": "Tread thickness",
+          "type": "number",
+          "default": 45,
+          "group": "Tread & nosing",
+          "unit": "mm",
+          "min": 10,
+          "max": 120,
+          "step": 1
+        },
+        {
+          "id": "treadInset",
+          "label": "Inset from column",
+          "type": "number",
+          "default": 10,
+          "group": "Tread & nosing",
+          "unit": "mm",
+          "min": 0,
+          "max": 300,
+          "step": 1
+        },
+        {
+          "id": "treadGap",
+          "label": "Gap between treads",
+          "type": "number",
+          "default": 1.5,
+          "group": "Tread & nosing",
+          "unit": "°",
+          "min": 0,
+          "max": 10,
+          "step": 0.25
+        },
+        {
+          "id": "edgeStyle",
+          "label": "Ledge profile",
+          "type": "select",
+          "default": "rounded",
+          "group": "Tread & nosing",
+          "options": [
+            {
+              "value": "square",
+              "label": "Square"
+            },
+            {
+              "value": "chamfer",
+              "label": "Chamfer"
+            },
+            {
+              "value": "rounded",
+              "label": "Round-over"
+            }
+          ]
+        },
+        {
+          "id": "edgeSize",
+          "label": "Profile size",
+          "type": "number",
+          "default": 6,
+          "group": "Tread & nosing",
+          "unit": "mm",
+          "min": 0,
+          "max": 25,
+          "step": 0.5,
+          "conditional": true
+        },
+        {
+          "id": "columnDiameter",
+          "label": "Column diameter",
+          "type": "number",
+          "default": 120,
+          "group": "Column",
+          "unit": "mm",
+          "min": 0,
+          "max": 400,
+          "step": 5
+        },
+        {
+          "id": "handrail",
+          "label": "Handrail",
+          "type": "boolean",
+          "default": true,
+          "group": "Handrail"
+        },
+        {
+          "id": "railHeight",
+          "label": "Rail height",
+          "type": "number",
+          "default": 950,
+          "group": "Handrail",
+          "unit": "mm",
+          "min": 600,
+          "max": 1200,
+          "step": 5,
+          "conditional": true
+        },
+        {
+          "id": "railDiameter",
+          "label": "Rail diameter",
+          "type": "number",
+          "default": 45,
+          "group": "Handrail",
+          "unit": "mm",
+          "min": 20,
+          "max": 90,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "railInset",
+          "label": "Rail inset",
+          "type": "number",
+          "default": 60,
+          "group": "Handrail",
+          "unit": "mm",
+          "min": 0,
+          "max": 300,
+          "step": 5,
+          "conditional": true
+        },
+        {
+          "id": "balusters",
+          "label": "Balusters",
+          "type": "boolean",
+          "default": true,
+          "group": "Handrail",
+          "conditional": true
+        },
+        {
+          "id": "balusterDiameter",
+          "label": "Baluster diameter",
+          "type": "number",
+          "default": 20,
+          "group": "Handrail",
+          "unit": "mm",
+          "min": 8,
+          "max": 60,
+          "step": 1,
+          "conditional": true
+        }
+      ],
+      "presets": []
+    },
+    {
+      "id": "staircase",
+      "name": "Straight staircase",
+      "description": "A straight flight with a shaped tread nosing, optional risers, stringers and handrail. Riser height is derived from the floor-to-floor rise and the step count.",
+      "doc": "staircase.md",
+      "source": "staircase.js",
+      "params": [
+        {
+          "id": "width",
+          "label": "Width",
+          "type": "number",
+          "default": 950,
+          "group": "Flight",
+          "help": "Clear width across the treads.",
+          "unit": "mm",
+          "min": 400,
+          "max": 2400,
+          "step": 10
+        },
+        {
+          "id": "totalRise",
+          "label": "Floor-to-floor rise",
+          "type": "number",
+          "default": 2700,
+          "group": "Flight",
+          "unit": "mm",
+          "min": 300,
+          "max": 5000,
+          "step": 10
+        },
+        {
+          "id": "steps",
+          "label": "Number of steps",
+          "type": "int",
+          "default": 15,
+          "group": "Flight",
+          "help": "Riser height = rise ÷ steps.",
+          "min": 2,
+          "max": 30,
+          "step": 1
+        },
+        {
+          "id": "going",
+          "label": "Going",
+          "type": "number",
+          "default": 280,
+          "group": "Flight",
+          "help": "Horizontal run of one step.",
+          "unit": "mm",
+          "min": 150,
+          "max": 450,
+          "step": 5
+        },
+        {
+          "id": "topTread",
+          "label": "Tread at top floor",
+          "type": "boolean",
+          "default": false,
+          "group": "Flight",
+          "help": "Off when the upper floor itself forms the last step."
+        },
+        {
+          "id": "treadThickness",
+          "label": "Tread thickness",
+          "type": "number",
+          "default": 42,
+          "group": "Tread & nosing",
+          "unit": "mm",
+          "min": 10,
+          "max": 120,
+          "step": 1
+        },
+        {
+          "id": "nosing",
+          "label": "Nosing overhang",
+          "type": "number",
+          "default": 25,
+          "group": "Tread & nosing",
+          "unit": "mm",
+          "min": 0,
+          "max": 80,
+          "step": 1
+        },
+        {
+          "id": "edgeStyle",
+          "label": "Ledge profile",
+          "type": "select",
+          "default": "rounded",
+          "group": "Tread & nosing",
+          "options": [
+            {
+              "value": "square",
+              "label": "Square"
+            },
+            {
+              "value": "chamfer",
+              "label": "Chamfer"
+            },
+            {
+              "value": "rounded",
+              "label": "Round-over"
+            },
+            {
+              "value": "bullnose",
+              "label": "Bullnose"
+            },
+            {
+              "value": "cove",
+              "label": "Cove"
+            },
+            {
+              "value": "ogee",
+              "label": "Ogee"
+            }
+          ]
+        },
+        {
+          "id": "edgeSize",
+          "label": "Profile size",
+          "type": "number",
+          "default": 12,
+          "group": "Tread & nosing",
+          "unit": "mm",
+          "min": 0,
+          "max": 40,
+          "step": 0.5,
+          "conditional": true
+        },
+        {
+          "id": "risers",
+          "label": "Closed risers",
+          "type": "boolean",
+          "default": true,
+          "group": "Risers"
+        },
+        {
+          "id": "riserThickness",
+          "label": "Riser thickness",
+          "type": "number",
+          "default": 20,
+          "group": "Risers",
+          "unit": "mm",
+          "min": 5,
+          "max": 80,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "stringers",
+          "label": "Stringers",
+          "type": "select",
+          "default": "closed",
+          "group": "Stringers",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "cut",
+              "label": "Cut (sawtooth)"
+            },
+            {
+              "value": "closed",
+              "label": "Closed (housed)"
+            }
+          ]
+        },
+        {
+          "id": "stringerThickness",
+          "label": "Stringer thickness",
+          "type": "number",
+          "default": 38,
+          "group": "Stringers",
+          "unit": "mm",
+          "min": 15,
+          "max": 100,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "stringerDepth",
+          "label": "Stringer depth",
+          "type": "number",
+          "default": 260,
+          "group": "Stringers",
+          "help": "Measured vertically below the pitch line.",
+          "unit": "mm",
+          "min": 60,
+          "max": 500,
+          "step": 5,
+          "conditional": true
+        },
+        {
+          "id": "handrail",
+          "label": "Handrail",
+          "type": "select",
+          "default": "right",
+          "group": "Handrail",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "left",
+              "label": "Left side"
+            },
+            {
+              "value": "right",
+              "label": "Right side"
+            },
+            {
+              "value": "both",
+              "label": "Both sides"
+            }
+          ]
+        },
+        {
+          "id": "railHeight",
+          "label": "Rail height",
+          "type": "number",
+          "default": 900,
+          "group": "Handrail",
+          "help": "Vertical distance above the nosing line.",
+          "unit": "mm",
+          "min": 600,
+          "max": 1200,
+          "step": 5,
+          "conditional": true
+        },
+        {
+          "id": "railDiameter",
+          "label": "Rail diameter",
+          "type": "number",
+          "default": 48,
+          "group": "Handrail",
+          "unit": "mm",
+          "min": 20,
+          "max": 90,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "balusters",
+          "label": "Balusters",
+          "type": "boolean",
+          "default": true,
+          "group": "Handrail",
+          "conditional": true
+        },
+        {
+          "id": "balusterDiameter",
+          "label": "Baluster diameter",
+          "type": "number",
+          "default": 22,
+          "group": "Handrail",
+          "unit": "mm",
+          "min": 8,
+          "max": 60,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "balustersPerStep",
+          "label": "Balusters per step",
+          "type": "int",
+          "default": 2,
+          "group": "Handrail",
+          "min": 1,
+          "max": 3,
+          "step": 1,
+          "conditional": true
+        }
+      ],
+      "presets": []
+    },
+    {
+      "id": "table",
+      "name": "Table",
+      "description": "A table from a plan outline — six tops, moulded or banded edges, extension and drop leaves, six leg arrangements, and an ornament level that runs from plain board to turned and moulded.",
+      "doc": "table.md",
+      "source": "table.js",
+      "params": [
+        {
+          "id": "shape",
+          "label": "Shape",
+          "type": "select",
+          "default": "rect",
+          "group": "Top",
+          "options": [
+            {
+              "value": "rect",
+              "label": "Rectangular"
+            },
+            {
+              "value": "square",
+              "label": "Square"
+            },
+            {
+              "value": "round",
+              "label": "Round"
+            },
+            {
+              "value": "oval",
+              "label": "Oval"
+            },
+            {
+              "value": "racetrack",
+              "label": "Racetrack — straight sides, round ends"
+            },
+            {
+              "value": "hex",
+              "label": "Hexagonal"
+            },
+            {
+              "value": "octagon",
+              "label": "Octagonal"
+            }
+          ]
+        },
+        {
+          "id": "length",
+          "label": "Length",
+          "type": "number",
+          "default": 1600,
+          "group": "Top",
+          "help": "Along +X. The diameter or width across for the shapes with no separate width.",
+          "unit": "mm",
+          "min": 400,
+          "max": 3600,
+          "step": 10
+        },
+        {
+          "id": "width",
+          "label": "Width",
+          "type": "number",
+          "default": 900,
+          "group": "Top",
+          "unit": "mm",
+          "min": 300,
+          "max": 1600,
+          "step": 10,
+          "conditional": true
+        },
+        {
+          "id": "height",
+          "label": "Height",
+          "type": "number",
+          "default": 750,
+          "group": "Top",
+          "help": "Floor to top surface. 450 coffee, 750 dining, 900 counter, 1050 bar.",
+          "unit": "mm",
+          "min": 300,
+          "max": 1150,
+          "step": 5
+        },
+        {
+          "id": "thickness",
+          "label": "Top thickness",
+          "type": "number",
+          "default": 28,
+          "group": "Top",
+          "unit": "mm",
+          "min": 10,
+          "max": 100,
+          "step": 1
+        },
+        {
+          "id": "cornerRadius",
+          "label": "Corner radius",
+          "type": "number",
+          "default": 25,
+          "group": "Top",
+          "unit": "mm",
+          "min": 0,
+          "max": 400,
+          "step": 5,
+          "conditional": true
+        },
+        {
+          "id": "edgeStyle",
+          "label": "Edge profile",
+          "type": "select",
+          "default": "rounded",
+          "group": "Edge & border",
+          "help": "The same profiles the stair treads and shelves use, swept around the outline.",
+          "options": [
+            {
+              "value": "square",
+              "label": "Square"
+            },
+            {
+              "value": "chamfer",
+              "label": "Chamfer"
+            },
+            {
+              "value": "rounded",
+              "label": "Round-over"
+            },
+            {
+              "value": "bullnose",
+              "label": "Bullnose"
+            },
+            {
+              "value": "cove",
+              "label": "Cove"
+            },
+            {
+              "value": "ogee",
+              "label": "Ogee"
+            }
+          ]
+        },
+        {
+          "id": "edgeSize",
+          "label": "Profile size",
+          "type": "number",
+          "default": 10,
+          "group": "Edge & border",
+          "unit": "mm",
+          "min": 0,
+          "max": 40,
+          "step": 0.5,
+          "conditional": true
+        },
+        {
+          "id": "border",
+          "label": "Border",
+          "type": "select",
+          "default": "none",
+          "group": "Edge & border",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "banding",
+              "label": "Banding — contrasting inlay around the field"
+            },
+            {
+              "value": "breadboard",
+              "label": "Breadboard ends — cross pieces at each end"
+            },
+            {
+              "value": "lip",
+              "label": "Raised lip — a gallery around the top"
+            }
+          ]
+        },
+        {
+          "id": "borderWidth",
+          "label": "Border width",
+          "type": "number",
+          "default": 60,
+          "group": "Edge & border",
+          "unit": "mm",
+          "min": 10,
+          "max": 250,
+          "step": 5,
+          "conditional": true
+        },
+        {
+          "id": "lipHeight",
+          "label": "Lip height",
+          "type": "number",
+          "default": 16,
+          "group": "Edge & border",
+          "unit": "mm",
+          "min": 3,
+          "max": 80,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "leafStyle",
+          "label": "Leaves",
+          "type": "select",
+          "default": "none",
+          "group": "Leaves",
+          "help": "Extension leaves drop into the middle and make the table longer; drop leaves are cut from the width and hinge down.",
+          "options": [
+            {
+              "value": "none",
+              "label": "One-piece top"
+            },
+            {
+              "value": "extension",
+              "label": "Extension leaves — inserted at the centre"
+            },
+            {
+              "value": "drop",
+              "label": "Drop leaves — hinged along the sides"
+            }
+          ]
+        },
+        {
+          "id": "leafCount",
+          "label": "Leaf count",
+          "type": "int",
+          "default": 1,
+          "group": "Leaves",
+          "min": 1,
+          "max": 3,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "leafWidth",
+          "label": "Leaf width",
+          "type": "number",
+          "default": 300,
+          "group": "Leaves",
+          "help": "Along the length for extension leaves, across it for drop leaves.",
+          "unit": "mm",
+          "min": 80,
+          "max": 700,
+          "step": 10,
+          "conditional": true
+        },
+        {
+          "id": "leafState",
+          "label": "Leaves",
+          "type": "select",
+          "default": "open",
+          "group": "Leaves",
+          "options": [
+            {
+              "value": "open",
+              "label": "In use — extended / raised"
+            },
+            {
+              "value": "closed",
+              "label": "Stowed — removed / hanging"
+            }
+          ],
+          "conditional": true
+        },
+        {
+          "id": "legArrangement",
+          "label": "Arrangement",
+          "type": "select",
+          "default": "corner",
+          "group": "Legs",
+          "options": [
+            {
+              "value": "corner",
+              "label": "Four legs — at the corners"
+            },
+            {
+              "value": "splayed",
+              "label": "Four legs — splayed out"
+            },
+            {
+              "value": "hairpin",
+              "label": "Hairpin — bent rod pairs"
+            },
+            {
+              "value": "trestle",
+              "label": "Trestle — end frames and a stretcher"
+            },
+            {
+              "value": "pedestal",
+              "label": "Pedestal — one centre column"
+            },
+            {
+              "value": "twin",
+              "label": "Twin pedestal"
+            }
+          ]
+        },
+        {
+          "id": "legProfile",
+          "label": "Leg profile",
+          "type": "select",
+          "default": "tapered",
+          "group": "Legs",
+          "options": [
+            {
+              "value": "square",
+              "label": "Square"
+            },
+            {
+              "value": "tapered",
+              "label": "Square, tapered"
+            },
+            {
+              "value": "round",
+              "label": "Round, tapered"
+            },
+            {
+              "value": "turned",
+              "label": "Turned — beads and a vase"
+            },
+            {
+              "value": "fluted",
+              "label": "Reeded — round with raised ribs"
+            }
+          ],
+          "conditional": true
+        },
+        {
+          "id": "legThickness",
+          "label": "Leg thickness",
+          "type": "number",
+          "default": 70,
+          "group": "Legs",
+          "unit": "mm",
+          "min": 15,
+          "max": 200,
+          "step": 1
+        },
+        {
+          "id": "legInset",
+          "label": "Inset from edge",
+          "type": "number",
+          "default": 45,
+          "group": "Legs",
+          "unit": "mm",
+          "min": 0,
+          "max": 500,
+          "step": 5,
+          "conditional": true
+        },
+        {
+          "id": "legTaper",
+          "label": "Taper to foot",
+          "type": "number",
+          "default": 0.62,
+          "group": "Legs",
+          "help": "Thickness left at the floor.",
+          "min": 0.25,
+          "max": 1,
+          "step": 0.01,
+          "conditional": true
+        },
+        {
+          "id": "splay",
+          "label": "Splay angle",
+          "type": "number",
+          "default": 12,
+          "group": "Legs",
+          "unit": "°",
+          "min": 0,
+          "max": 30,
+          "step": 0.5,
+          "conditional": true
+        },
+        {
+          "id": "stretcher",
+          "label": "Stretchers",
+          "type": "select",
+          "default": "none",
+          "group": "Legs",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "h",
+              "label": "H — side rails and a centre rail"
+            },
+            {
+              "value": "box",
+              "label": "Box — a rail on all four sides"
+            },
+            {
+              "value": "x",
+              "label": "X — corner to corner"
+            }
+          ],
+          "conditional": true
+        },
+        {
+          "id": "stretcherHeight",
+          "label": "Stretcher height",
+          "type": "number",
+          "default": 200,
+          "group": "Legs",
+          "unit": "mm",
+          "min": 40,
+          "max": 700,
+          "step": 5,
+          "conditional": true
+        },
+        {
+          "id": "apron",
+          "label": "Apron",
+          "type": "boolean",
+          "default": true,
+          "group": "Apron & ornament",
+          "help": "The rail running under the top between the legs."
+        },
+        {
+          "id": "apronDepth",
+          "label": "Apron depth",
+          "type": "number",
+          "default": 90,
+          "group": "Apron & ornament",
+          "unit": "mm",
+          "min": 30,
+          "max": 300,
+          "step": 5,
+          "conditional": true
+        },
+        {
+          "id": "apronInset",
+          "label": "Apron inset",
+          "type": "number",
+          "default": 25,
+          "group": "Apron & ornament",
+          "unit": "mm",
+          "min": 0,
+          "max": 200,
+          "step": 5,
+          "conditional": true
+        },
+        {
+          "id": "apronThickness",
+          "label": "Apron thickness",
+          "type": "number",
+          "default": 24,
+          "group": "Apron & ornament",
+          "unit": "mm",
+          "min": 10,
+          "max": 80,
+          "step": 1,
+          "conditional": true
+        },
+        {
+          "id": "fancy",
+          "label": "Fanciness",
+          "type": "int",
+          "default": 1,
+          "group": "Apron & ornament",
+          "help": "1 beads the apron, 2 arches it and pads the feet, 3 adds a moulding under the top, 4 corbels the legs, 5 collars the turnings and doubles the mouldings.",
+          "min": 0,
+          "max": 5,
+          "step": 1
+        }
+      ],
+      "presets": [
+        {
+          "name": "Farmhouse dining",
+          "params": {
+            "shape": "rect",
+            "length": 2000,
+            "width": 950,
+            "thickness": 45,
+            "cornerRadius": 0,
+            "edgeStyle": "chamfer",
+            "edgeSize": 6,
+            "border": "breadboard",
+            "borderWidth": 110,
+            "legArrangement": "corner",
+            "legProfile": "tapered",
+            "legThickness": 90,
+            "legTaper": 0.7,
+            "apronDepth": 110,
+            "apronInset": 30,
+            "fancy": 1
+          }
+        },
+        {
+          "name": "Georgian extending",
+          "params": {
+            "shape": "oval",
+            "length": 1700,
+            "width": 1050,
+            "thickness": 32,
+            "edgeStyle": "ogee",
+            "edgeSize": 16,
+            "border": "banding",
+            "borderWidth": 70,
+            "leafStyle": "extension",
+            "leafCount": 2,
+            "leafWidth": 350,
+            "leafState": "open",
+            "legArrangement": "corner",
+            "legProfile": "turned",
+            "legThickness": 85,
+            "apronDepth": 100,
+            "fancy": 5
+          }
+        },
+        {
+          "name": "Round pedestal café",
+          "params": {
+            "shape": "round",
+            "length": 800,
+            "thickness": 26,
+            "height": 740,
+            "edgeStyle": "bullnose",
+            "border": "none",
+            "legArrangement": "pedestal",
+            "legProfile": "turned",
+            "legThickness": 80,
+            "apron": false,
+            "fancy": 3
+          }
+        },
+        {
+          "name": "Pembroke drop-leaf",
+          "params": {
+            "shape": "racetrack",
+            "length": 900,
+            "width": 1000,
+            "thickness": 22,
+            "height": 730,
+            "edgeStyle": "rounded",
+            "edgeSize": 8,
+            "leafStyle": "drop",
+            "leafWidth": 300,
+            "leafState": "closed",
+            "legArrangement": "corner",
+            "legProfile": "turned",
+            "legThickness": 55,
+            "apronDepth": 80,
+            "apronInset": 15,
+            "fancy": 4
+          }
+        },
+        {
+          "name": "Trestle work table",
+          "params": {
+            "shape": "rect",
+            "length": 2200,
+            "width": 800,
+            "thickness": 50,
+            "cornerRadius": 0,
+            "edgeStyle": "square",
+            "border": "none",
+            "legArrangement": "trestle",
+            "legProfile": "square",
+            "legThickness": 100,
+            "legInset": 300,
+            "apron": false,
+            "fancy": 0
+          }
+        },
+        {
+          "name": "Hairpin coffee table",
+          "params": {
+            "shape": "racetrack",
+            "length": 1100,
+            "width": 600,
+            "thickness": 20,
+            "height": 430,
+            "edgeStyle": "rounded",
+            "edgeSize": 6,
+            "border": "none",
+            "legArrangement": "hairpin",
+            "legThickness": 60,
+            "legInset": 60,
+            "splay": 14,
+            "apron": false,
+            "fancy": 0
+          }
+        },
+        {
+          "name": "Octagonal games table",
+          "params": {
+            "shape": "octagon",
+            "length": 1100,
+            "thickness": 30,
+            "height": 745,
+            "edgeStyle": "cove",
+            "edgeSize": 14,
+            "border": "lip",
+            "borderWidth": 90,
+            "lipHeight": 14,
+            "legArrangement": "twin",
+            "legProfile": "fluted",
+            "legThickness": 70,
+            "apron": true,
+            "apronDepth": 95,
+            "fancy": 4
+          }
+        }
+      ]
+    }
+  ]
+}

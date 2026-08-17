@@ -48,6 +48,13 @@ export const env = {
   dataDir: process.env.DATA_DIR
     ? resolve(repoRoot, process.env.DATA_DIR)
     : resolve(serverRoot, "data"),
+  /**
+   * Where the Object Studio generator library is published (plan.md §2,
+   * amended). This origin's code is fetched and evaluated on this server, so it
+   * must be one you control; the default is the project's own build. Unset it
+   * to work entirely from the bundled snapshot.
+   */
+  studioUrl: process.env.STUDIO_URL ?? "https://jasonsperske.github.io/object_studio/",
   /** Offline STT model. Downloaded by `npm run stt:model`, never committed. */
   voskModelPath: process.env.VOSK_MODEL_PATH
     ? resolve(repoRoot, process.env.VOSK_MODEL_PATH)

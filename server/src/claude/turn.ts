@@ -73,6 +73,11 @@ const MAX_TOKENS = 4096;
 export async function* runTurn(
   req: TurnRequest,
   catalogue: readonly AssetEntry[],
+  /**
+   * The generator listing, rendered once by assets/studio.ts. Passed in rather
+   * than fetched here so the prompt stays byte-identical across turns.
+   */
+  generators = "",
 ): AsyncGenerator<TurnStreamEvent> {
   outputSchema ??= turnResponseJsonSchema();
 
@@ -88,7 +93,7 @@ export async function* runTurn(
       system: [
         {
           type: "text",
-          text: buildSystemPrompt(catalogue),
+          text: buildSystemPrompt(catalogue, generators),
           // Byte-identical across turns — the whole reason the scene, viewer
           // and measurements live in the user message instead of up here.
           cache_control: { type: "ephemeral" },

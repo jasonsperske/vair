@@ -356,3 +356,40 @@ synthesise word times from the utterance duration.
 (GHSA-67mh-4wv8-2f99, dev server only). The fix is Vite 6+, which needs Node 20+; this project
 is on Node 18.18. Loopback-only binding limits the exposure. Revisit when the toolchain moves
 to Node 20.
+
+## Parametric props
+
+Alongside the fixed CC0 kit, the model can place **generated** props: a table built to the size
+asked for rather than the nearest table somebody modelled. These come from a hosted build of the
+[Object Studio](https://jasonsperske.github.io/object_studio/) library, which publishes an agent
+bundle — an index of every generator and its parameters, the sources, and a runtime that turns one
+into geometry.
+
+```
+STUDIO_URL=https://jasonsperske.github.io/object_studio/
+```
+
+The server fetches that, bakes the mesh it is asked for into a glTF, and caches it under
+`DATA_DIR/studio`. The headset loads a URL like any other asset. The model names a generator and
+its parameters in one string:
+
+```
+studio:table?length=2000&width=950&legProfile=tapered
+studio:rock?size=900&erosion=0.8&moss=0.6
+```
+
+Parameters outside their range are clamped and unknown names are ignored, so a near miss still
+places something. Anything the generator's own metrics flag — a chair with too little knee
+clearance, a case with more drives than bays — comes back on `X-Studio-Notes` and is logged.
+
+In the headset a `studio:` id loads the baked glTF (`client/src/scene/gltf.ts`). The node goes
+into the scene graph empty and fills in when the bytes land, because the scene view has to hand
+back a node synchronously; a load that fails stands in a primitive rather than nothing (§14). The
+mesh's origin is at its **base**, not its centre, so a table on the floor sits at y=0 — the
+opposite of the primitives, and the system prompt says so.
+
+`STUDIO_URL` is fetched **and its code is evaluated on the server**, so point it at a build you
+control. Unset it and the server runs from the snapshot committed in
+`server/src/assets/studio-snapshot.json`, which keeps search and the prompt working offline; a
+generator whose source has never been fetched is then not offered at all. See plan.md §2 for why
+this is in scope at all.

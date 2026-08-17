@@ -6,8 +6,10 @@ carries decisions that are expensive to relitigate.
 ## The rules that are not negotiable
 
 - **§2 non-goals and §3 dead ends are closed.** No passthrough, no multiplayer, no 2D scene
-  editor, no runtime mesh generation. Unity Asset Store, Suno, Spotify and YouTube Audio Library
-  have all been investigated and ruled out on licensing or API grounds. Do not re-propose them.
+  editor, no splats, no diffusion-generated geometry. Unity Asset Store, Suno, Spotify and YouTube
+  Audio Library have all been investigated and ruled out on licensing or API grounds. Do not
+  re-propose them. **One amendment:** parametric shape generators are in scope — read §2's
+  amendment before touching `server/src/assets/studio.ts` or `bake.ts`.
 - **No API key ever reaches the client** (§14). Everything goes through `server/`.
 - **The controller path must always work** (§14). Hand tracking will fail.
 - **Never respond "I can't find that"** (§14). Substitute the nearest asset with an honest
@@ -62,6 +64,24 @@ silent, and `voice` should only be true while talking.
 Real STT is `STT_PROVIDER=vosk` — offline, no key, native word timings, `npm run stt:model` to
 fetch the model. Don't reach for the Web Speech API: it returns no word timings and the Quest
 browser doesn't implement it. `health.stt` deliberately reports false until the model is on disk.
+
+## Parametric props
+
+The generator library is **fetched from `STUDIO_URL` and its code is evaluated on this server**.
+That is a real trust boundary: point it at a build you control and nowhere else. Everything is
+cached under `DATA_DIR/studio` — the index, the sources, the runtime, and every baked mesh.
+
+Three things about it that are load-bearing:
+
+- **The mesh is baked server-side, never in the headset.** That is what keeps §2's amendment
+  compatible with §13's frame budget. Do not "simplify" this by shipping generator sources to the
+  client.
+- **Parameters live inside the assetId** (`studio:table?length=2000`), not in a new action field.
+  This is why the structured-output grammar did not grow — see the size limit below. If you find
+  yourself adding a `parameters` object to `place_object`, re-read that section first.
+- **A generator that cannot be built is not advertised.** With the library unreachable and nothing
+  cached, the catalogue falls back to the CC0 kit. §14 says never refuse; it does not say promise
+  something and then 500.
 
 ## The model boundary
 

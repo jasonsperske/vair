@@ -34,10 +34,43 @@ import type { AssetEntry, MeasurementBundle, SceneDocument, TurnRequest } from "
 /* ------------------------------------------------------------- system --- */
 
 /**
- * Stable across every turn of every session. The only variable is the asset
- * catalogue, which changes when the kit changes, not per request.
+ * The parametric half of the catalogue (plan.md §2, amended).
+ *
+ * Parameters ride inside the assetId as a query string, which is why no action
+ * changed to support this: assetId is already a free string, so the structured
+ * output grammar is exactly the size it was. See assets/studio.ts.
  */
-export function buildSystemPrompt(catalogue: readonly AssetEntry[]): string {
+function buildGeneratorSection(generators: string): string {
+  return `
+# Built to order
+
+These are not models but generators: give one parameters and it builds the shape you asked for. Prefer a generator over a stand-in primitive whenever the thing you want is one of these — a table built to the right size beats a box every time.
+
+Put the parameters in the assetId as a query string:
+
+    studio:table?length=2000&width=950&legProfile=tapered
+    studio:rock?size=900&erosion=0.8&moss=0.6
+    studio:chair?backStyle=ladder&seatHeight=450
+
+Rules for that string:
+
+- **Lengths are in millimetres.** A two metre table is length=2000, not 2.
+- **Set only what the request calls for.** Everything else takes a sensible default. Two or three parameters is a normal answer; do not fill in a dozen.
+- Values outside a range are clamped and names that are not parameters are ignored, so a near miss still places something.
+- Presets are known-good starting points. To use one, set the parameters it stands for; the listing names them so you know what exists.
+- Emitted objects are already the right size, so scale stays 1 unless the user asks for something deliberately out of proportion.
+- **A generated mesh stands on y=0** — its origin is at its base, not its centre, unlike the primitives above. A table on the floor goes at y=0, not at half its height.
+
+${generators}
+`;
+}
+
+/**
+ * Stable across every turn of every session. The only variables are the asset
+ * catalogue and the generator library, both of which change when the kit
+ * changes, not per request.
+ */
+export function buildSystemPrompt(catalogue: readonly AssetEntry[], generators = ""): string {
   return `You are the scene engine for Vair, a voice-driven VR world builder. The user stands in an empty black void wearing a headset and speaks to build a 3D scene. You turn what they say into concrete scene actions.
 
 # Coordinate system
@@ -69,9 +102,10 @@ To act on something that already exists, pass its exact id from the scene listin
 
 Choose assetId from this catalogue and nothing else:
 
-${catalogue.map((e) => `- ${e.id} — ${e.name} (${e.tags.join(", ")})${e.boundsY ? `, ${e.boundsY}m tall at scale 1` : ""}`).join("\n")}
+${catalogue.filter((e) => !e.id.startsWith("studio:")).map((e) => `- ${e.id} — ${e.name} (${e.tags.join(", ")})${e.boundsY ? `, ${e.boundsY}m tall at scale 1` : ""}`).join("\n")}
 
 There will often be no exact match. Substitute the nearest thing and say so plainly in your speech — "I don't have a proper armchair, so that's a box standing in for now". Never refuse to place something because the asset is missing, and never say "I can't find that".
+${generators ? buildGeneratorSection(generators) : ""}
 
 # The ground
 

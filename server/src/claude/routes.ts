@@ -2,6 +2,7 @@ import { Router } from "express";
 import { TurnRequest } from "@vair/shared";
 import { capabilities } from "../env.js";
 import { catalogueEntries } from "../assets/routes.js";
+import { describeGenerators } from "../assets/studio.js";
 import { runTurn } from "./turn.js";
 
 /**
@@ -45,7 +46,11 @@ claudeRouter.post("/turn", async (req, res) => {
   res.on("close", () => abort.abort());
 
   try {
-    for await (const event of runTurn(parsed.data, catalogueEntries())) {
+    for await (const event of runTurn(
+      parsed.data,
+      await catalogueEntries(),
+      await describeGenerators(),
+    )) {
       if (abort.signal.aborted) break;
       res.write(`${JSON.stringify(event)}\n`);
     }
