@@ -123,7 +123,8 @@ Before adding an action, ask whether it can be a variant of one that exists.
 ```bash
 npm run dev          # client, loopback:5173
 npm run dev:server   # API, :8787
-npm run headset      # adb reverse for both
+npm run headset      # adb reverse for both, over cable or Wi-Fi alike
+npm run headset:stop # drop the forwards and any Wi-Fi connection
 npm run typecheck    # all workspaces
 npm run latency      # stage timing tables from server/data/latency.jsonl
 ```

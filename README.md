@@ -50,6 +50,67 @@ opens it to the LAN — but you will then need HTTPS to get the microphone in M1
 Enable Developer Mode from the Meta mobile app first; it is not discoverable in-headset.
 Remote-debug via `chrome://inspect`.
 
+### Over Wi-Fi instead of the cable
+
+The cable is only needed once, to tell the headset to start listening for adb on the network.
+With it plugged in and `adb devices` showing the headset:
+
+```bash
+adb tcpip 5555                   # adbd restarts, listening on :5555
+                                 # ...now unplug the cable
+adb connect 192.168.4.29:5555    # your headset's address
+```
+
+The wireless connection is a separate transport and asks for its own authorisation, so put the
+headset on and accept the debugging prompt again — tick *Always allow from this computer*.
+`adb devices` should then show `192.168.4.29:5555   device`. The address is in the headset under
+Settings → Wi-Fi → your network, or on your router.
+
+Nothing else changes. `adb reverse` is carried over the adb connection itself, so it does not
+care whether that connection is a cable or a network:
+
+```bash
+npm run headset        # same two reverses, now over the air
+```
+
+**You still open `http://localhost:5173`, and you still do not want `VAIR_LAN=1`.** Being on
+Wi-Fi is not a reason to expose the dev server to the LAN: the reverse forward makes the
+headset's own localhost point back at this machine either way, and localhost is the secure
+origin WebXR and `getUserMedia` require. `http://192.168.4.29:5173` is still the wrong URL,
+even now that the headset can reach it — it will load, and the *enter VR* button will not
+appear.
+
+Two things worth knowing:
+
+- With the cable *and* the wireless connection attached, adb sees two devices and `adb reverse`
+  fails with *more than one device/emulator*. Unplug the cable, or pin the run to one of them:
+  `ANDROID_SERIAL=192.168.4.29:5555 npm run headset`.
+- TCP mode does not survive rebooting the headset, and the address changes if the DHCP lease
+  does. Either one means plugging the cable back in for one more `adb tcpip 5555`.
+
+If `adb connect` reports *connection refused*, adbd is not in TCP mode — the `adb tcpip` step
+did not take, or the headset has rebooted since. If it reports *failed to authenticate*, the
+prompt is waiting for you inside the headset.
+
+Wi-Fi adb is enough for the M0–M2 loop, but it is worth knowing that audio upload and the model
+turn both cross it, so the §16 stage timings measure your wireless link as well as the pipeline.
+Take latency numbers over the cable.
+
+### Shutting it down
+
+The reverse forwards outlive the process that created them, so they need removing explicitly:
+
+```bash
+npm run unforward       # drop the :5173 and :8787 reverses
+npm run unforward:all   # ...or every forward on the device
+npm run disconnect      # drop the Wi-Fi connection to the headset
+npm run headset:stop    # both of those, in one
+```
+
+`adb reverse --list` says what is currently forwarded. None of this touches TCP mode on the
+headset: after `npm run disconnect`, a plain `adb connect 192.168.4.29:5555` picks it up again
+with no cable — only rebooting the headset undoes `adb tcpip 5555`.
+
 ## Talking to it
 
 Two gestures, deliberately different:
