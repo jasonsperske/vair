@@ -26,6 +26,13 @@ into a scene document you can save, reload and share.
 measurement-bundle resolver already exist. The M0 HUD prints the resolved point hit on every
 pinch, which validates that path on-device from the first milestone.
 
+**Quest 3 is the target**, for performance and for development both. The M1 and M2 passes above
+say *Quest 2* because that is where they were measured, back when it was the dev device; they
+are pessimistic bounds rather than the current baseline, and re-running them on a Quest 3 would
+flatter the code for reasons that have nothing to do with the code. Quest 2 remains a
+compatibility consideration — it should work, it is not what anything is tuned for. See plan.md
+§11 for what that means for the hand-tracking figures specifically.
+
 ## Running it
 
 ```bash

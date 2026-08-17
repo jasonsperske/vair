@@ -17,6 +17,9 @@ carries decisions that are expensive to relitigate.
 - **STT must return word-level timestamps** (§6). Hard requirement. Do not interpolate them.
 - **Do not start a milestone before the previous one passes on-device** (§12). Desktop WebXR
   emulators lie about hand tracking.
+- **Quest 3 is the target, for performance and development both** (§11). Quest 2 is
+  compatibility only. Figures recorded against a Quest 2 (M1, M2) are pessimistic bounds, so
+  always write the device next to the number.
 
 ## Where the truth lives
 

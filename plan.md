@@ -100,11 +100,24 @@ the local option cleared it at zero cost. Measured on a 2-core i3: 0.09x realtim
 utterance decodes in ~0.3s. The tradeoff is accuracy on proper nouns; a larger model is a
 `VOSK_MODEL_PATH` change and a cloud provider drops in behind the same `STT_PROVIDER`
 switch.
-**Target device:** Quest 3 / 3S remains the **performance** target — the 60–70% budget in
-§13 assumes it. **Development and testing is on a Quest 2**, where M1 and M2 both pass.
-Quest 2 is not a shipping target (6GB RAM, half the GPU) and its hand tracking is weaker,
-so any reliability figure measured there is a pessimistic bound — record the device
-alongside the number or a later Quest 3 run will look like a regression.
+**Target device:** Quest 3 / 3S, for performance **and** for development — the 60–70%
+budget in §13 assumes it, and testing now happens on the same hardware the budget is
+written against. Quest 2 is a **compatibility** consideration only: it should work, it is
+not what anything is tuned for, and it is not what a number without a device attached
+refers to.
+
+Two consequences of the dev device having changed mid-project:
+
+- **M1 and M2 passed on a Quest 2** and those records say so deliberately. They are
+  pessimistic bounds, not the current baseline. Re-running them on a Quest 3 will produce
+  better numbers, and that is the hardware, not the code — do not book it as a speedup.
+- **Hand tracking is the one to watch.** Quest 2's is meaningfully weaker, so M0's
+  outstanding 50-trial pinch acceptance now runs on the *friendlier* device. A pass there
+  says less about a Quest 2 user than it would have back when the Quest 2 was the dev
+  device, which is another reason §14's controller path is non-negotiable, not a fallback.
+
+Record the device alongside any reliability or latency figure. Without it the two
+generations are silently mixed and every comparison is noise.
 
 ### Why WebXR and not Unity
 
