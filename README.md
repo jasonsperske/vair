@@ -71,7 +71,11 @@ care whether that connection is a cable or a network:
 
 ```bash
 npm run headset        # same two reverses, now over the air
+npm run headset:open   # ...and ask the headset to open the page for you
 ```
+
+`headset:open` is worth knowing about once the cable is gone: typing a URL on a floating
+keyboard is the most tedious part of a wireless session, and `am start` skips it.
 
 **You still open `http://localhost:5173`, and you still do not want `VAIR_LAN=1`.** Being on
 Wi-Fi is not a reason to expose the dev server to the LAN: the reverse forward makes the
