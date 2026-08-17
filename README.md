@@ -17,7 +17,7 @@ into a scene document you can save, reload and share.
 | M0 — Void | implemented, **awaiting on-device acceptance** (50 pinch trials, both hands) |
 | M1 — Voice loop | **passes on-device** — real speech transcribed and applied on a Quest 2 |
 | M2 — Temporal binding | **passes on-device** — "put a cube here" placed the cube where the user pointed |
-| M3 — Scene + Claude | **partial** — prompt, schema boundary, apply path, object naming and streaming progressive commit work end to end; the glTF pipeline does not, and first object lands at ~3.0s against a 2s target |
+| M3 — Scene + Claude | **partial** — prompt, schema boundary, apply path, object naming and streaming progressive commit work end to end, and generated props now load as real meshes; the curated kit is still three primitives, and first object lands at ~3.0s against a 2s target |
 | M4 — Affordances | not started |
 | M5 — Audio | not started |
 | M6 — Persistence | **partial** — voice save, model auto-naming, reload and the scene library work; share links and the companion web app do not |

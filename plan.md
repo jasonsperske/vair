@@ -412,10 +412,26 @@ naming, streaming progressive commit (ground plane and lighting instant; objects
 as they resolve).
 *Accept:* "put a wooden table here, and a lamp on it" produces both, correctly named and
 positioned, first object visible in under 2s.
-*Status:* prompt, schema boundary, apply path and **streaming progressive commit** built;
-the **glTF asset pipeline is not**, so the catalogue is three primitives and every prop is
-a substitution. The acceptance utterance passes on content: both objects placed,
-geometrically stacked, distinctly named, substitution spoken honestly.
+*Status:* prompt, schema boundary, apply path and **streaming progressive commit** built.
+The acceptance utterance passes on content: both objects placed, geometrically stacked,
+distinctly named, substitution spoken honestly. It does not pass on latency, and it has not
+had an on-device acceptance run.
+
+*Assets, as of the §2 amendment:* the **glTF load path now exists** and generated props are
+real geometry — "a two metre farmhouse table" arrives as a 2.00 × 0.75 × 0.90m mesh, five
+parts and 3316 triangles, standing at y=0. Verified in a desktop browser against the real
+server, not in a headset; unlike hand tracking there is nothing here an emulator can lie
+about, but it is still not an on-device result. What is missing is the **curated kit**:
+`catalogue.json` is three primitives, and only a `studio:` id routes to the loader, so
+dropping modelled `.glb` files into the kit would need `nodeFor` to load them by URL as well.
+Until then every non-generated prop is still a substitution, and §17's open question about
+the right kit size is untouched.
+
+Baking costs less than it looks: **34ms** to bake a mesh whose generator is already cached
+and **~1.5ms** to serve one already baked, against **~350ms** the first time a given
+generator is used at all (fetch the source, compile, bake). That is a rounding error next to
+the model turn below, and it is paid on the client's asset fetch after the action has already
+committed, so it does not move first-object time except on that first use.
 
 The model returns *actions*, not events — the event log owns id/seq/t/source, and
 `shared/apply.ts` expands actions into events next to the log that assigns identity.
