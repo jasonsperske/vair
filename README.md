@@ -146,6 +146,43 @@ Hands are drawn as one sphere per tracked joint, sized by the joint's own radius
 this app over `adb reverse` on localhost and may have no route to the internet, which would leave
 you with invisible hands and no obvious reason why.
 
+## The info box
+
+The debug panel — state, fps, per-hand tracking and pinch counts, the voice meter, the
+transcript — follows the head by default, lazily and with a wide deadzone. That is right when
+you are debugging and wrong when you are looking at the scene, so it moves on command:
+
+```
+"put the info box on the back of my right hand"   → mounted, rigid, watch-style
+"stick the hud on my left hand"                   → same, other hand
+"hide the info box"                               → gone
+"show the info box" / "put the info box back"     → back to head-follow
+```
+
+Local and instant like the ground, and **never escalated**: the model has no action for this and
+should not get one. It is also the one local command that does *not* append to the event log —
+the log is the scene (§8), and where you parked a readout is not part of the scene. Writing it
+there would replay on load, land in the derived narrative, and sit in the undo stack in front of
+the edits you actually want to undo.
+
+The word cap is 12 rather than the surface matchers' 9, because the confidence comes from the
+noun instead of from brevity: nothing in a scene is called an info box or a HUD, so an eleven-word
+sentence containing one can't be about anything else. Naming both hands ("left or right?") does
+nothing rather than flipping a coin the user then has to undo.
+
+Mounted, the panel scales to about a phone and sits 5cm clear of the back of the hand, over the
+metacarpals, reading up toward the fingers like a watch face. Orientation comes from the wrist
+joint's own frame — `-Z` distal, `+Y` out of the back of the hand — so it is rigid rather than
+lazy: a panel that lagged would swim every time you turned your wrist to read it. **Controllers
+get it too** (§14 — that path must always work), but grip space carries no back-of-hand, so
+rather than guess, the panel floats 10cm above the grip and turns to face you.
+
+If the mounting hand loses tracking the panel holds its last pose instead of flying back to your
+face and out again — that hand is outside the tracking volume, so the panel is almost always out
+of sight anyway, and freezing beats flickering through dropouts.
+
+From a desk, `window.vair.hud("left" | "right" | "head" | "hidden")` sets it directly.
+
 ## Speech to text
 
 **Vosk, offline and local.** Word-level timestamps are a hard requirement (§6.3), which
@@ -185,6 +222,7 @@ window.vair.help()                              // list everything
 window.vair.say("put a cube here")              // latch, commit, transcribe, resolve
 window.vair.say("make the door this high", { durationMs: 2500, hand: "left" })
 window.vair.arm("put a lamp there")             // then pull a trigger yourself
+window.vair.hud("left")                         // mount the info box, or "head" / "hidden"
 window.vair.measure("here", 800)                // resolve one bundle 800ms in the past
 window.vair.poseAt(1500)                        // raw ring-buffer pose
 window.vair.state() / .scene() / .events() / .lastUtterance()

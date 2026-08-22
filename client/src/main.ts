@@ -22,9 +22,10 @@ import {
   matchBrightnessCommand,
   matchCeilingCommand,
   matchGroundCommand,
+  matchHudCommand,
   matchSkyCommand,
 } from "./input/local-commands.js";
-import { DebugHud, type HudData } from "./debug/hud.js";
+import { DebugHud, type HudData, type HudPlacement } from "./debug/hud.js";
 import { earcons } from "./audio/earcons.js";
 import { AudioCapture } from "./audio/capture.js";
 import {
@@ -175,6 +176,9 @@ const pressCount: Record<HandSide, number> = { left: 0, right: 0 };
  * happens in a frame.
  */
 function dispatchUtterance(u: ResolvedUtterance): void {
+  // First, because its noun is the most specific one any matcher looks for and
+  // because it is the one command the model has no action for.
+  if (tryLocalHud(u)) return;
   if (tryLocalGround(u)) return;
   if (tryLocalSky(u)) return;
   if (tryLocalCeiling(u)) return;
@@ -187,6 +191,40 @@ function dispatchUtterance(u: ResolvedUtterance): void {
     machine.done();
     endTurnTiming();
   }
+}
+
+/**
+ * `note` is painted on the panel itself, so the hidden case is written for
+ * `vair.state()` rather than for a reader — the panel vanishing is the only
+ * confirmation a hide can have, and it is a sufficient one.
+ */
+const HUD_NOTES: Record<HudPlacement, string> = {
+  head: "info box → in front of you",
+  left: "info box → left hand",
+  right: "info box → right hand",
+  hidden: "info box hidden",
+};
+
+/**
+ * Moving the info box.
+ *
+ * Deliberately NOT through commitEnvironment: the event log is the scene (§8),
+ * and where a debug readout is parked is not part of the scene. Putting it
+ * there would replay on load, land in the derived narrative and sit in the undo
+ * stack in front of the edits the user actually wants to undo.
+ */
+function tryLocalHud(u: ResolvedUtterance): boolean {
+  const placement = matchHudCommand(u.text);
+  if (!placement) return false;
+
+  hud.placement = placement;
+  turnLatency?.setPath("local");
+  // No scene_mutated mark for the same reason: nothing in the scene moved, and
+  // a sample claiming otherwise would skew the local row in `npm run latency`.
+  note = HUD_NOTES[placement];
+  machine.done();
+  endTurnTiming();
+  return true;
 }
 
 /**
@@ -640,7 +678,11 @@ runtime.onFrame(({ xrTime, dt, frame, referenceSpace }) => {
   wisps.setFocus(focus);
   wisps.update(dt, elapsed);
 
-  hud.update(headPosition, headQuaternion, hudData(), xrTime);
+  // The mounting hand, when it has one. `SourceState` satisfies `HudAnchor`, so
+  // this passes the live pose through with nothing allocated per frame.
+  const mount =
+    hud.placement === "left" ? hands.left : hud.placement === "right" ? hands.right : null;
+  hud.update(headPosition, headQuaternion, mount, hudData(), xrTime);
 });
 
 function hudData(): HudData {
@@ -818,6 +860,10 @@ async function boot(): Promise<void> {
           handModels.visible = v;
         },
         handsVisible: () => handModels.visible,
+        setHudPlacement: (p) => {
+          hud.placement = p;
+        },
+        hudPlacement: () => hud.placement,
       });
     });
   }

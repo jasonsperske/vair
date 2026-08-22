@@ -3,7 +3,7 @@ import type { HandSide, PoseRingBuffer } from "../core/pose-buffer.js";
 import { resolveMeasurement, type ResolveOptions } from "../input/deixis.js";
 import type { InteractionMachine } from "../input/state-machine.js";
 import type { ResolvedUtterance } from "../input/utterance.js";
-import type { HudData } from "./hud.js";
+import type { HudData, HudPlacement } from "./hud.js";
 
 /**
  * Dev-only bridge exposing the running experience on `window.vair`, so an agent
@@ -38,6 +38,8 @@ export type BridgeDeps = {
   voice?(): { rms: number; gate: number; voice: boolean };
   setHandsVisible?(visible: boolean): void;
   handsVisible?(): boolean;
+  setHudPlacement?(placement: HudPlacement): void;
+  hudPlacement?(): HudPlacement;
 };
 
 type SayOptions = { durationMs?: number; hand?: HandSide };
@@ -67,6 +69,7 @@ export function installDebugBridge(deps: BridgeDeps): void {
         'vair.arm("…") then pull a trigger — same thing, but you drive the gesture yourself',
         "await vair.probeMic()             — M1 gate: does the mic work IN-SESSION? speak while it runs",
         "vair.press('left'|'right')        — simulate a pinch/trigger latch",
+        "vair.hud('left'|'right'|'head'|'hidden') — move or hide the info box",
         "vair.state()                      — interaction state, tracking, counters, fps",
         'vair.measure("here", msAgo)       — resolve one measurement bundle directly',
         "vair.poseAt(msAgo)                — raw pose from the ring buffer",
@@ -88,6 +91,16 @@ export function installDebugBridge(deps: BridgeDeps): void {
     hands(visible?: boolean) {
       if (visible !== undefined) deps.setHandsVisible?.(visible);
       return { visible: deps.handsVisible?.() ?? null };
+    },
+
+    /**
+     * Move the info box, or hide it. Same four placements the voice command
+     * reaches; this is the way to check the mount from a desk, where saying
+     * "put the info box on my left hand" needs a mock utterance first.
+     */
+    hud(placement?: HudPlacement) {
+      if (placement !== undefined) deps.setHudPlacement?.(placement);
+      return { placement: deps.hudPlacement?.() ?? null };
     },
 
     arm(text: string, opts: SayOptions = {}) {

@@ -518,6 +518,12 @@ objects with no id collision.
   > ground, ceiling, ambient) take the same local fast path and are folded from one
   > `environment_set`, so a partial change merges rather than wiping its neighbours.
   >
+  > **The info box is a fifth local matcher but not a fifth *scene* path.** "Put the info box
+  > on the back of my right hand" / "hide the info box" is recognised the same way and applied
+  > in a frame, but it never reaches the event log — where a debug readout is parked is not part
+  > of the scene (§8), and logging it would replay on load and land in the derived narrative.
+  > Noted here only so the count below stays honest.
+  >
   > **Only `move` / `scale` / `rotate` remain**, still routing through the model at ~3s —
   > exactly the 2s-to-pick-up failure this rule forbids. That is M4's affordance fast path,
   > and four working local paths are now a template for it.
