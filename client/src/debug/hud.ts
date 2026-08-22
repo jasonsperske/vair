@@ -4,8 +4,8 @@ import {
   Mesh,
   MeshBasicMaterial,
   PlaneGeometry,
+  Quaternion,
   Vector3,
-  type Quaternion,
 } from "three";
 
 import type { InteractionState } from "../input/state-machine.js";
@@ -44,11 +44,50 @@ export type HudData = {
   note: string;
 };
 
+/**
+ * Where the panel lives. Head-follow is the default and what M0 was accepted
+ * against; the wrist placements exist because a panel that lazy-follows the
+ * head is in the way exactly when you are looking at the scene, and hiding it
+ * outright then leaves no way to check state mid-session.
+ */
+export type HudPlacement = "head" | "left" | "right" | "hidden";
+
+/** The hand a wrist-mounted panel rides on. `SourceState` satisfies this. */
+export type HudAnchor = {
+  tracked: boolean;
+  isHand: boolean;
+  wrist: Vector3;
+  wristQuaternion: Quaternion;
+};
+
 const W = 640;
 const H = 360;
 
+/** Panel is 0.5 x 0.28m; on a wrist it wants to be about a phone. */
+const HAND_SCALE = 0.32;
+
+/**
+ * Wrist space, same convention as input/hands.ts: -Z distal (toward the
+ * fingertips), +Y out of the BACK of the hand. So this is 5cm clear of the
+ * back of the hand and 7cm along it, which centres the panel over the
+ * metacarpals rather than over the wrist bone.
+ */
+const HAND_OFFSET = new Vector3(0, 0.05, -0.07);
+
+/** A controller has no back-of-hand, so its panel floats above the grip. */
+const CONTROLLER_LIFT = 0.1;
+
+/**
+ * Lays the panel flat on the back of the hand: its normal (+Z) onto the
+ * wrist's +Y, its up (+Y) onto the wrist's -Z, so the text reads up toward the
+ * fingers the way a watch face does.
+ */
+const BACK_OF_HAND = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), -Math.PI / 2);
+
 export class DebugHud {
   readonly mesh: Mesh;
+  /** Set by the local command matcher. Read every frame; no transition state. */
+  placement: HudPlacement = "head";
   private readonly canvas = document.createElement("canvas");
   private readonly ctx: CanvasRenderingContext2D;
   private readonly texture: CanvasTexture;
@@ -77,8 +116,40 @@ export class DebugHud {
    * Head pose comes from the XRFrame's viewer pose, not from the three camera:
    * three only copies the XR camera onto the app camera inside render(), which
    * runs after this, so reading the camera here would be a frame stale.
+   *
+   * `anchor` is the hand the panel is mounted on, or null when it isn't.
    */
-  update(headPosition: Vector3, headQuaternion: Quaternion, data: HudData, xrTime: number): void {
+  update(
+    headPosition: Vector3,
+    headQuaternion: Quaternion,
+    anchor: HudAnchor | null,
+    data: HudData,
+    xrTime: number,
+  ): void {
+    if (this.placement === "hidden") {
+      this.mesh.visible = false;
+      return;
+    }
+    this.mesh.visible = true;
+
+    if (this.placement === "head") {
+      this.followHead(headPosition, headQuaternion);
+    } else if (anchor?.tracked) {
+      this.followHand(anchor, headPosition);
+    }
+    // Otherwise the hand it is mounted on isn't tracked. Hold the last pose:
+    // the panel is wherever that hand was, which is out of the tracking volume
+    // and so almost always out of sight, and freezing beats both flickering
+    // through tracking dropouts and flying back to the face and out again.
+
+    // 10Hz is plenty for a text panel and keeps the canvas upload off the
+    // critical path of a 90Hz frame.
+    if (xrTime - this.lastPaint < 100) return;
+    this.lastPaint = xrTime;
+    this.paint(data);
+  }
+
+  private followHead(headPosition: Vector3, headQuaternion: Quaternion): void {
     // Lazy-follow with a wide deadzone. Hard head-locking makes text unreadable
     // during head motion and makes the panel impossible to look away from.
     this.desired.set(0, -0.18, -0.9).applyQuaternion(headQuaternion).add(headPosition);
@@ -86,12 +157,30 @@ export class DebugHud {
       this.mesh.position.lerp(this.desired, 0.08);
     }
     this.mesh.quaternion.copy(headQuaternion);
+    this.mesh.scale.setScalar(1);
+  }
 
-    // 10Hz is plenty for a text panel and keeps the canvas upload off the
-    // critical path of a 90Hz frame.
-    if (xrTime - this.lastPaint < 100) return;
-    this.lastPaint = xrTime;
-    this.paint(data);
+  /**
+   * Rigid, not lazy: mounted means mounted, and a panel that lagged the hand
+   * would swim every time you turned your wrist to read it.
+   */
+  private followHand(anchor: HudAnchor, headPosition: Vector3): void {
+    this.mesh.scale.setScalar(HAND_SCALE);
+
+    if (anchor.isHand) {
+      this.desired.copy(HAND_OFFSET).applyQuaternion(anchor.wristQuaternion).add(anchor.wrist);
+      this.mesh.position.copy(this.desired);
+      this.mesh.quaternion.copy(anchor.wristQuaternion).multiply(BACK_OF_HAND);
+      return;
+    }
+
+    // Controller path (§14 — it must always work). Grip space doesn't carry the
+    // hand-joint convention above, so rather than guess which way the back of
+    // the hand is, lift the panel straight up and turn it to face the viewer.
+    this.desired.copy(anchor.wrist);
+    this.desired.y += CONTROLLER_LIFT;
+    this.mesh.position.copy(this.desired);
+    this.mesh.lookAt(headPosition);
   }
 
   private paint(d: HudData): void {

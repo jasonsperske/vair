@@ -1,4 +1,5 @@
 import type { CeilingStyle, GroundStyle, SkyStyle } from "@vair/shared";
+import type { HudPlacement } from "../debug/hud.js";
 
 /**
  * Local recognition of ground commands (plan.md §9 and §13).
@@ -37,6 +38,11 @@ const STYLE_WORDS: [GroundStyle, RegExp][] = [
  */
 const MAX_WORDS = 9;
 
+/** Lowercase, punctuation stripped, single-spaced. Every matcher starts here. */
+function normalise(text: string): string {
+  return text.toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+
 /**
  * Overall brightness, the other half of §13's instant lighting.
  *
@@ -49,7 +55,7 @@ const MAX_WORDS = 9;
  * lamp brighter" is about one object and needs the model to resolve which.
  */
 export function matchBrightnessCommand(text: string): number | null {
-  const normalised = text.toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  const normalised = normalise(text);
   if (!normalised || normalised.split(" ").length > MAX_WORDS) return null;
 
   // A named object means one light, not the room.
@@ -67,7 +73,7 @@ export function matchBrightnessCommand(text: string): number | null {
 }
 
 export function matchGroundCommand(text: string): GroundStyle | null {
-  const normalised = text.toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  const normalised = normalise(text);
   if (!normalised) return null;
   if (normalised.split(" ").length > MAX_WORDS) return null;
   if (!GROUND_NOUNS.test(normalised)) return null;
@@ -101,9 +107,64 @@ const CEILING_WORDS: [CeilingStyle, RegExp][] = [
   ["wood", /\b(wood|wooden|timber|beams|boards)\b/],
 ];
 
+/* -------------------------------------------------------- the info box --- */
+
+/**
+ * Where the debug panel sits. Local always, and never escalated: the model has
+ * no action for this and never should — the panel is an instrument for looking
+ * at the session, not part of the scene.
+ *
+ * It is also the one local command that does NOT append to the event log. The
+ * log is the scene (§8); where you happen to have parked a readout is not, and
+ * writing it there would replay on load and turn up in the saved narrative.
+ */
+const HUD_NOUNS =
+  /\b(info box|infobox|info panel|info display|readout|hud|heads up display|debug panel|debug overlay|debug display|stats panel|status panel)\b/;
+
+/**
+ * Longer than the surface matchers' cap, because the confidence here comes
+ * from the noun rather than from brevity: nothing in a scene is called an info
+ * box or a HUD, so "attach the info box to the back of my right hand" — eleven
+ * words — cannot be a request about anything else.
+ */
+const HUD_MAX_WORDS = 12;
+
+/** "take it off my hand" — unmount, not hide. Checked before anything else. */
+const HUD_UNMOUNT = /\b(off|away from)\s+(my\s|the\s)?(left\s|right\s)?(hand|wrist|arm)\b/;
+
+const HUD_HIDE = /\b(hide|hidden|dismiss|close|get rid|remove|invisible|stop showing)\b/;
+
+/**
+ * Also the way back from hidden, which is why "show" is in here. "back" is safe
+ * only because a named side is matched first, so "the back of my right hand"
+ * has already been answered by the time we look — and "stop showing" is safe
+ * only because the hide list is checked first.
+ */
+const HUD_HEAD =
+  /\b(head|face|front|float|floating|detach|unattach|default|normal|back|where it was|show|unhide|bring)\b/;
+
+export function matchHudCommand(text: string): HudPlacement | null {
+  const normalised = normalise(text);
+  if (!normalised) return null;
+  if (normalised.split(" ").length > HUD_MAX_WORDS) return null;
+  if (!HUD_NOUNS.test(normalised)) return null;
+
+  const left = /\bleft\b/.test(normalised);
+  const right = /\bright\b/.test(normalised);
+  // "left or right hand" is a question, not an instruction. Do nothing rather
+  // than pick, since either choice is a coin flip the user has to undo.
+  if (left && right) return null;
+
+  if (HUD_UNMOUNT.test(normalised)) return "head";
+  if (HUD_HIDE.test(normalised)) return "hidden";
+  if (left || right) return left ? "left" : "right";
+  if (HUD_HEAD.test(normalised)) return "head";
+  return null;
+}
+
 /** Same shape and same confidence bar as the ground matcher. */
 function matchSurface<T>(text: string, nouns: RegExp, words: [T, RegExp][]): T | null {
-  const normalised = text.toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+  const normalised = normalise(text);
   if (!normalised) return null;
   if (normalised.split(" ").length > MAX_WORDS) return null;
   if (!nouns.test(normalised)) return null;

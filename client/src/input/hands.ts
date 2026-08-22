@@ -31,6 +31,12 @@ export type SourceState = {
   /** Index fingertip for hands; the pointer ray origin for controllers. */
   tip: Vector3;
   tipQuaternion: Quaternion;
+  /**
+   * Wrist joint for hands, grip pose for controllers — the anchor for anything
+   * mounted on the hand itself rather than on the pointing fingertip.
+   */
+  wrist: Vector3;
+  wristQuaternion: Quaternion;
   /** Outward from the palm. Meaningless when isHand is false. */
   palmNormal: Vector3;
   /** Debounced pinch pose (hands) or trigger (controllers). */
@@ -166,9 +172,12 @@ export class HandInput {
     index.getWorldPosition(out.tip);
     index.getWorldQuaternion(out.tipQuaternion);
 
+    wrist.getWorldPosition(out.wrist);
+    wrist.getWorldQuaternion(out.wristQuaternion);
+
     // WebXR hand joint convention: -Z points distally (toward the fingertip)
     // and +Y out of the BACK of the hand, so the palm faces -Y.
-    out.palmNormal.set(0, -1, 0).applyQuaternion(wrist.getWorldQuaternion(new Quaternion()));
+    out.palmNormal.set(0, -1, 0).applyQuaternion(out.wristQuaternion);
 
     this.toHead.copy(headPosition).sub(out.tip).normalize();
     out.suppressedByPalmFacing = out.palmNormal.dot(this.toHead) > PALM_TO_FACE_DOT;
@@ -202,6 +211,11 @@ export class HandInput {
     out.isHand = false;
     slot.controller.getWorldPosition(out.tip);
     slot.controller.getWorldQuaternion(out.tipQuaternion);
+    // Grip rather than the pointer ray: it sits in the fist, which is as close
+    // to a wrist as a controller has.
+    const held = slot.grip.visible ? slot.grip : slot.controller;
+    held.getWorldPosition(out.wrist);
+    held.getWorldQuaternion(out.wristQuaternion);
     out.palmNormal.set(0, -1, 0).applyQuaternion(out.tipQuaternion);
     out.suppressedByPalmFacing = false;
     out.pinchDistance = Number.NaN;
@@ -217,6 +231,8 @@ function blankState(side: HandSide): SourceState {
     isHand: false,
     tip: new Vector3(),
     tipQuaternion: new Quaternion(),
+    wrist: new Vector3(),
+    wristQuaternion: new Quaternion(),
     palmNormal: new Vector3(0, -1, 0),
     active: false,
     justPressed: false,
